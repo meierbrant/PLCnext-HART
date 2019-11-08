@@ -29,6 +29,11 @@ private:
     hart_ip_hdr_t clientInfo;
     hart_ip_hdr_t serverInfo;
 
+    int send(uint8_t *bytes, size_t len, int flags);
+    int recv(uint8_t *buf, size_t len, int flags);
+    int sendData(uint8_t *data, size_t len);
+    int recvData(uint8_t *buf);
+
     /* Inputs */
     bool activate = false;
     //bool poll = false;

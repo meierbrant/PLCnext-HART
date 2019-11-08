@@ -3,15 +3,15 @@
 #include "nettools.hpp"
 #include <string.h>
 
+#define DEBUG
+
 // Constructor defined in header
 
 int HartMux::initSession() {
-    std::cout << "initSession()" << std::endl;
     sock.connect();
     memset(&request, 0, sizeof(hart_ip_pkt_t));
 
     /* Send Request */
-    // Client information
     request.header.version = 1;
     request.header.msgType = 0; // 0: request
     request.header.msgId = 0;   // 0: session init
@@ -19,61 +19,23 @@ int HartMux::initSession() {
     request.header.seqNo = 1;   // sequence init start value
     request.header.byteCount = 13; // 13 bytes of whole frame for init session telegram
 
+    uint8_t body[request.header.byteCount-sizeof(request.header)];
+    memset(body, 0, sizeof(body));
+    request.body = body;
     uint8_t initSessionMaster = 1; // 1: primary master
-    request.body[0] = initSessionMaster;
+    body[0] = initSessionMaster;
+    serialize<uint32_t>(inactivityTimeout, &body[1]);
 
-    // Inactivity Close Timer
-    serialize<uint32_t>(inactivityTimeout, &request.body[1]);
+    sendData(body, sizeof(body));
 
-    // send packet to MUX
-    // NOTE: 
-    cout << "sending packet..." << endl;
-    uint8_t bytes[sizeof(hart_ip_pkt_t)];
-    memset(bytes, 0, sizeof(bytes));
-    //serialize<hart_ip_pkt_t>(request, bytes);
-    //serializeHartIpHdr(request.header, bytes);
-    bytes[0] = request.header.version;
-    bytes[1] = request.header.msgType;
-    bytes[2] = request.header.msgId;
-    bytes[3] = request.header.status;
-    bytes[4] = request.header.seqNo >> 8;
-    bytes[5] = request.header.seqNo;
-    bytes[6] = request.header.byteCount >> 8;
-    bytes[7] = request.header.byteCount;
-    bytes[8] = 1;
-    bytes[9] = inactivityTimeout >> 24;
-    bytes[10] = inactivityTimeout >> 16;
-    bytes[11] = inactivityTimeout >> 8;
-    bytes[12] = inactivityTimeout;
-    printBytes(bytes, request.header.byteCount);
-    int r = sock.send(bytes, request.header.byteCount, 0);
-    if (r < 0) {
-        perror("Error sending packet to HART MUX");
-        return -1;
-    } else if (r == 0) {
-        perror("The HART MUX hung up");
-        return -1;
-    }
-    cout << "sent " << r << " bytes" << endl;
-
-    // get response from MUX
-    cout << "receiving packet..." <<endl;
-    uint8_t buf[512];
-    r = sock.recv(buf, sizeof(hart_ip_pkt_t), 0);
-    if (r < 0) {
-        perror("Error recieving packet from HART MUX");
-        return -1;
-    } else if (r == 0) {
-        perror("The HART MUX hung up");
-        return -1;
-    }
-    std::cout << "recieved " << r << " bytes: \t" << buf << std::endl;
+    uint8_t data[13];
+    recvData(data);
     
     if ((response.header.seqNo != request.header.seqNo) || response.header.status > 0) {
         // TODO: more detailed error
         err = true;
         return 1;
-    } else {
+    } else { // increment seqNo for next command
         if (request.header.seqNo > 0xfffe) {
             request.header.seqNo = 1;
         } else {
@@ -85,7 +47,21 @@ int HartMux::initSession() {
 }
 
 int HartMux::getUniqueAddr() { // cmd 0 by short address for gateway
-    return sendCmd(0);
+    request.header.version = 1;
+    request.header.msgType = 0; // 0: Request
+    request.header.msgId = 3;   // 3: Token-Passing PDU
+    request.header.status = 0;  // 0: init to 0 by client
+    request.header.byteCount = 8; // 8 bytes of whole frame for telegram
+
+    uint8_t data[0];
+    sendData(data, 0);
+
+    uint8_t buf[512];
+    memset(buf, 0, 512);
+    int dataLen = recvData(buf);
+    printBytes(buf, dataLen);
+
+    return 0;
 }
 
 int HartMux::sendCmd(unsigned char cmd) {
@@ -93,7 +69,7 @@ int HartMux::sendCmd(unsigned char cmd) {
     request.header.msgType = 0; // 0: Request
     request.header.msgId = 3;   // 3: Token-Passing PDU
     request.header.status = 0;  // 0: init to 0 by client
-    request.header.byteCount = 13; // 13 bytes of whole frame for telegram
+    request.header.byteCount = 8; // 13 bytes of whole frame for telegram
 
     // PDU frame
     uint8_t delimiter = 2; // Frame Type STX 0x02(Indicates Slave or Burst Mode device)
@@ -101,12 +77,12 @@ int HartMux::sendCmd(unsigned char cmd) {
                         // BACK 0x01
     uint8_t byteCnt = 0;
 
-    // body[0] is really the packet[8]
-    request.body[0] = delimiter;
-    request.body[1] = 0x80;
-    request.body[2] = cmd;
-    request.body[3] = byteCnt;
-    request.body[4] = delimiter ^ 0x80 ^ cmd ^ byteCnt; // check byte
+    uint8_t data[32];
+    data[0] = delimiter;
+    data[1] = 0x80;
+    data[2] = cmd;
+    data[3] = byteCnt;
+    data[4] = delimiter ^ 0x80 ^ cmd ^ byteCnt; // check byte
 
 
     // TODO: send packet to MUX
@@ -145,4 +121,67 @@ int HartMux::sendCmd(unsigned char cmd) {
     }
 
     return 0;
+}
+
+int HartMux::send(uint8_t *bytes, size_t len, int flags) {
+    int r = sock.send(bytes, len, flags);
+    if (r < 0) {
+        perror("Error recieving packet header from HART MUX");
+        return -1;
+    } else if (r == 0) {
+        perror("The HART MUX hung up");
+        return -1;
+    }
+}
+
+int HartMux::recv(uint8_t *buf, size_t len, int flags) {
+    int r = sock.recv(buf, len, flags);
+    if (r < 0) {
+        perror("Error recieving packet header from HART MUX");
+    } else if (r == 0) {
+        perror("The HART MUX hung up");
+    }
+    return r;
+}
+
+int HartMux::sendData(uint8_t *data, size_t len) {
+    // send packet to MUX
+    request.header.byteCount = len + sizeof(hart_ip_hdr_t);
+    uint8_t bytes[request.header.byteCount];
+    memset(bytes, 0, sizeof(bytes));
+    serializeHartIpHdr(request.header, bytes);
+    
+    memcpy(&bytes[sizeof(hart_ip_hdr_t)], data, len);
+    send(bytes, request.header.byteCount, 0);
+    #ifdef DEBUG
+    cout << "sent packet:" << endl;
+    printBytes(bytes, request.header.byteCount);
+    #endif
+}
+
+int HartMux::recvData(uint8_t *buf) {
+    // get response header from MUX
+    uint8_t hdr_buf[sizeof(hart_ip_hdr_t)];
+    memset(hdr_buf, 0, sizeof(hdr_buf));
+    recv(hdr_buf, sizeof(hdr_buf), 0);
+    response.header = deserializeHartIpHdr(hdr_buf);
+    #ifdef DEBUG
+    cout << "received header (network byte order) (expecting " << response.header.byteCount << "bytes):" << endl;
+    printBytes(response.header);
+    #endif
+    
+    // LEFTOFF: hangs for 60s, then we get the data
+    // get rest of response from MUX
+    cout << "TODO: handle receiving more data than buf allocated for" << endl;
+    uint8_t bdy_buf[response.header.byteCount - sizeof(hart_ip_hdr_t)];
+    memset(buf, 0, sizeof(bdy_buf));
+    cout << "listening for " << sizeof(bdy_buf) << " bytes..." << endl;
+    int r = recv(buf, sizeof(bdy_buf), 0);
+    response.body = buf;
+    #ifdef DEBUG
+    cout << "received data (network byte order):" << endl;
+    printBytes(response.body, sizeof(bdy_buf));
+    #endif
+
+    return r;
 }

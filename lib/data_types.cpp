@@ -18,3 +18,15 @@ void serializeHartIpHdr(hart_ip_hdr_t header, uint8_t *bytes) {
     serialize<uint16_t>(header.byteCount, &bytes[6]);
     // 8 bytes total
 }
+
+hart_ip_hdr_t deserializeHartIpHdr(uint8_t *bytes) {
+    hart_ip_hdr_t header;
+    header.version = bytes[0];
+    header.msgType = bytes[1];
+    header.msgId = bytes[2];
+    header.status = bytes[3];
+    header.seqNo = fromBytes<uint16_t>(&bytes[4]);
+    header.byteCount = fromBytes<uint16_t>(&bytes[6]);
+    // 8 bytes total
+    return header;
+}

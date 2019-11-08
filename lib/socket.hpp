@@ -25,6 +25,6 @@ class Socket {
     int connect();
     int bind();
     int send(const uint8_t *msg, size_t len, int flags);
-    int recv(uint8_t *buf, int len, int flags);
+    int recv(uint8_t *buf, size_t len, int flags);
     int close();
 };

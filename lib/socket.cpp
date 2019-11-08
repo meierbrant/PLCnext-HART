@@ -10,19 +10,25 @@
 #include <unistd.h>
 #include <iostream>
 
+#define DEBUG
+
 /**
  * designed based on this network programming guide:
  * https://beej.us/guide/bgnet/pdf/bgnet_usl_c_1.pdf
  */
 
 Socket::Socket(std::string target) {
+    #ifdef DEBUG
     std::cout << "new Socket(" << target << ":80)" << std::endl;
+    #endif
     Socket::target = target;
     Socket::port = "80";
 }
 
 Socket::Socket(std::string target, std::string port) {
+    #ifdef DEBUG
     std::cout << "new Socket(" << target << ":" << port << ")" << std::endl;
+    #endif
     Socket::target = target;
     Socket::port = port;
 }
@@ -56,11 +62,14 @@ int Socket::connect() {
     struct sockaddr_in *ipv4 = (struct sockaddr_in *)servinfo->ai_addr;
     inet_ntop(AF_INET, &(ipv4->sin_addr), ipStr, INET_ADDRSTRLEN);
     std::string ipstr(ipStr);
+    #ifdef DEBUG
     std::cout << "\t" << ipstr << "\tport=" << ipv4->sin_port << "\tprotocol=" << servinfo->ai_protocol << std::endl;
-
+    #endif
 
     sockfd = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
+    #ifdef DEBUG
     std::cout << "\tsockdf=" << sockfd << "\tai_addr=" << servinfo->ai_addr << std::endl;
+    #endif
     int r = ::connect(sockfd, servinfo->ai_addr, servinfo->ai_addrlen);
     if (r < 0) {
         perror("Error connecting socket");
@@ -84,7 +93,7 @@ int Socket::send(const uint8_t *msg, size_t len, int flags) {
     return bytes_sent;
 }
 
-int Socket::recv(uint8_t *buf, int len, int flags) {
+int Socket::recv(uint8_t *buf, size_t len, int flags) {
     int bytes_recvd = 0;
     while (bytes_recvd < len) {
         int result = ::recv(sockfd, &buf[bytes_recvd], len-bytes_recvd, flags);
