@@ -1,5 +1,36 @@
 #include "data_types.hpp"
 
+string hartStatusCodetoString(uint8_t msgId, uint8_t code) {
+    if (msgId == 0) {
+        switch(code) {
+            case 0: return string("Success"); break;
+            case 2: return string("Error: invalid selection (invalid master type)"); break;
+            case 5: return string("Error: too few data bytes received"); break;
+            case 6: return string("Error: device specific command error"); break;
+            case 8: return string("Warning: set to nearest possible value (inactivity timer value"); break;
+            case 14: return string("Error: version not supported"); break;
+            case 15: return string("Error: all available sessions in use"); break;
+            case 16: return string("Error: access restricted (session already established)"); break;
+            default: return string("undefined");
+        }
+    } else if (msgId == 1 || msgId == 2) {
+        switch(code) {
+            case 0: return string("Success"); break;
+            case 6: return string("Error: device specific command error"); break;
+            default: return string("");
+        }
+    } else if (msgId == 3) {
+        switch(code) {
+            case 0: return string("Success"); break;
+            case 5: return string("Error: too few data bytes received"); break;
+            case 6: return string("Error: device specific command error"); break;
+            case 15: return string("Error: unsupported message ID"); break;
+            case 16: return string("Error: access restricted (server resources exhausted)"); break;
+            default: return string("");
+        }
+    }
+}
+
 void printBytes(uint8_t *bytes, size_t len) {
     for (int i = 0; i < len; i++) {
         if (i && i % 8 == 0) cout << "  ";

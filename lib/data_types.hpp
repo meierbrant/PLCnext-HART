@@ -13,6 +13,7 @@ using std::hex;
 using std::dec;
 using std::setfill;
 using std::setw;
+using std::string;
 
 struct hart_ip_hdr_t { // 8 bytes total
     uint8_t version;   //0
@@ -23,10 +24,7 @@ struct hart_ip_hdr_t { // 8 bytes total
     uint16_t byteCount; //6-7
 };
 
-// struct hart_ip_pkt_t { // 512 bytes total
-//     hart_ip_hdr_t header; // bytes 0-7
-//     uint8_t body[512-sizeof(hart_ip_hdr_t)]; // bytes 8-512
-// };
+string hartStatusCodetoString(uint8_t msgId, uint8_t code);
 
 struct hart_ip_pkt_t {
     hart_ip_hdr_t header; // bytes 0-7
