@@ -13,7 +13,8 @@ class HartMux {
 
     HartMux(std::string ip) : sock(ip, "5094"), ipAddress(ip), inactivityTimeout(60000) {};
     int initSession();
-    int getUniqueAddr(); // cmd 0
+    int closeSession();
+    uint24_t getUniqueAddr(); // cmd 0
     int sendCmd(unsigned char cmd);
 
 private:
@@ -31,6 +32,7 @@ private:
 
     int send(uint8_t *bytes, size_t len, int flags);
     int recv(uint8_t *buf, size_t len, int flags);
+    int sendHeader();
     int sendData(uint8_t *data, size_t len);
     int recvData(uint8_t *buf);
 

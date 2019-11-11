@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     HartMux hart_mux(HART_MUX_IP);
     hart_mux.initSession();
     hart_mux.getUniqueAddr();
-    hart_mux.sock.close();
+    hart_mux.closeSession();
 
     return 0;
 }

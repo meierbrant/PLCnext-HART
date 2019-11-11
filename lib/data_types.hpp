@@ -31,11 +31,35 @@ struct hart_ip_pkt_t {
     uint8_t *body;
 };
 
+typedef uint32_t uint24_t;
+
 struct hart_unique_id_res_t {
     uint8_t a = 254;
     uint8_t deviceType;
-    
+    uint8_t minPreamblesReq;
+    uint8_t hartVersion;
+    uint8_t deviceRevisionLevel;
+    uint8_t hwInfo;
+    uint8_t flags;
+    uint24_t deviceId;
 };
+
+// struct hart_pdu_frame_t {
+//     hart_pdu_delimiter_t delimiter;
+// };
+
+// struct hart_pdu_delimiter_t {
+//     HART_PDU_FRAME_TYPES frameType: 3;
+//     uint8_t physicalLayerType: 2;
+//     uint8_t numExpansionBytes: 2;
+//     uint8_t addressType: 1;
+// };
+
+// enum HART_PDU_FRAME_TYPES {
+//     BACK = 1,
+//     STX = 2,
+//     ACK = 6
+// };
 
 void printBytes(uint8_t *bytes, size_t len);
 void serializeHartIpHdr(hart_ip_hdr_t header, uint8_t *bytes);
@@ -50,6 +74,21 @@ T fromBytes(uint8_t* bytes) {
     uint8_t reverse_bytes[s];
     for (int i=0; i<s; i++) {
         reverse_bytes[s-1-i] = bytes[i];
+    }
+    bytes2 = reverse_bytes;
+    #endif
+    memcpy(&x, bytes2, sizeof(T));
+    return x;
+}
+
+template <typename T>
+T fromBytes(uint8_t* bytes, size_t size) {
+    T x;
+    uint8_t* bytes2 = bytes;
+    #ifdef REVERSE
+    uint8_t reverse_bytes[size];
+    for (int i=0; i<size; i++) {
+        reverse_bytes[size-1-i] = bytes[i];
     }
     bytes2 = reverse_bytes;
     #endif
