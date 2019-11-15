@@ -12,10 +12,11 @@ int main(int argc, char *argv[]) {
     // if (nettools::ping(HART_MUX_IP.c_str()) == 0) {
     //     cout << "Successful ping @ " << HART_MUX_IP << endl;
     // }
-
+    
     HartMux hart_mux(HART_MUX_IP);
     hart_mux.initSession();
-    hart_mux.getUniqueAddr();
+    uint8_t *addrUniq = hart_mux.getUniqueAddr();
+    hart_mux.sendCmd(74, addrUniq);
     hart_mux.closeSession();
 
     return 0;

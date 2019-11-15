@@ -2,9 +2,10 @@
 
 #include "data_types.hpp"
 #include "socket.hpp"
+#include "hart_device.hpp"
 #include <iostream>
 
-class HartMux {
+class HartMux : public HartDevice {
     public:
     bool err;
     std::string errMsg;
@@ -14,22 +15,18 @@ class HartMux {
     HartMux(std::string ip) : sock(ip, "5094"), ipAddress(ip), inactivityTimeout(60000) {};
     int initSession();
     int closeSession();
-    uint24_t getUniqueAddr(); // cmd 0
-    int sendCmd(unsigned char cmd);
+    uint8_t* getUniqueAddr(); // cmd 0
+    void readIOSystemCapabilities(); // cmd 74
+    int sendCmd(unsigned char cmd, uint8_t pollAddr);
+    int sendCmd(unsigned char cmd, uint8_t *uniqueAddr);
 
 private:
-    unsigned int clientUdtInactivity;
+    HartDevice devices[32];
 
     /* HART General */
     hart_ip_pkt_t request;
     hart_ip_pkt_t response;
-    uint8_t rcvPacket[512]; // TODO: might be array of 512 words
-    uint8_t addressUniqGW[5]; // utdAddressUnique; don't know what this type is
-    uint8_t addressUniqCH[5]; // utdAddressUnique; don't know what this type is
-
-    hart_ip_hdr_t clientInfo;
-    hart_ip_hdr_t serverInfo;
-
+    
     int send(uint8_t *bytes, size_t len, int flags);
     int recv(uint8_t *buf, size_t len, int flags);
     int sendHeader();

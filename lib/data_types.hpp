@@ -31,19 +31,6 @@ struct hart_ip_pkt_t {
     uint8_t *body;
 };
 
-typedef uint32_t uint24_t;
-
-struct hart_unique_id_res_t {
-    uint8_t a = 254;
-    uint8_t deviceType;
-    uint8_t minPreamblesReq;
-    uint8_t hartVersion;
-    uint8_t deviceRevisionLevel;
-    uint8_t hwInfo;
-    uint8_t flags;
-    uint24_t deviceId;
-};
-
 // struct hart_pdu_frame_t {
 //     hart_pdu_delimiter_t delimiter;
 // };

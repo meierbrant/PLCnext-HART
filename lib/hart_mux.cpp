@@ -1,4 +1,5 @@
 #include "hart_mux.hpp"
+#include "hart_devices.hpp"
 
 #include "nettools.hpp"
 #include <string.h>
@@ -53,23 +54,95 @@ int HartMux::closeSession() {
     return response.header.status;
 }
 
-uint24_t HartMux::getUniqueAddr() { // cmd 0 by short address for gateway
+uint8_t* HartMux::getUniqueAddr() { // cmd 0 by short address for gateway
     cout << "getUniqAddr()" << endl;
-    uint8_t data[5];
+
+    sendCmd(0, (uint8_t)0);
+    // PDU frame up to data bytes should be 6 bytes
+    uint16_t deviceTypeCode = (response.body[7] << 8) | response.body[8];
+    addrUniq[0] = response.body[7];
+    addrUniq[1] = response.body[8];
+    memcpy(&addrUniq[2], &response.body[15], 3);
+
+    // ISSUE: for some reason this line causes response.body's bytes to be zeroed out
+    HartDevice hd(deviceTypeCode);
+    setTypeInfo(deviceTypeCode);
+
+    memcpy(hd.addrUniq, addrUniq, 5);
+    return (uint8_t *)addrUniq;
+}
+
+void HartMux::readIOSystemCapabilities() { // cmd 74
+
+}
+
+/**
+ * pollAddr is zero by default since drop networks are not supported yet
+ */
+int HartMux::sendCmd(unsigned char cmd, uint8_t pollAddr) {
+    size_t byteCount = 0;
+    uint8_t data[512];
     memset(data, 0, sizeof(data));
-    /* PDU Frame */
-    // delimiter
-    data[0] = 0x02; // STX frame
-    // address
-    data[1] = 0x80;
-    // expansion bytes (normally zero)
-    // command
-    data[2] = 0;
-    // byte count
-    data[3] = 0;
-    // data
-    // check byte
-    data[4] = data[0] ^ data[1] ^ data[2] ^ data[3];
+    if (cmd == 0) {
+        /* PDU Frame */
+        // delimiter
+        data[0] = 0x02; // STX frame
+        // address
+        data[1] = 0x80 | pollAddr;
+        // expansion bytes (normally zero)
+        // command
+        data[2] = cmd;
+        // byte count
+        data[3] = 0;
+        // data
+        // check byte
+        for (int i=0; i<4; i++) {
+            data[4] ^= data[i];
+        }
+        byteCount += 5;
+    } else {
+        cout << "Error: short address only allowed for cmd 0" << endl;
+        return -1;
+    }
+
+    request.header.version = 1;
+    request.header.msgType = 0; // 0: Request
+    request.header.msgId = 3;   // 3: Token-Passing PDU
+    request.header.status = 0;  // 0: init to 0 by client
+    
+    sendData(data, byteCount);
+
+    uint8_t buf[512];
+    memset(buf, 0, 512);
+    
+    return recvData(buf);
+}
+
+/**
+ * param uniqueAddr is 5 bytes
+ */
+int HartMux::sendCmd(unsigned char cmd, uint8_t *uniqueAddr) {
+    size_t byteCount = 0;
+    uint8_t data[512];
+    memset(data, 0, sizeof(data));
+    if (cmd == 0 || cmd == 74) {
+        /* PDU Frame */
+        // delimiter
+        data[0] = 0x82; // STX frame
+        // address
+        memcpy(&data[1], addrUniq, 5);
+        // expansion bytes (normally zero)
+        // command
+        data[6] = cmd;
+        // byte count
+        data[7] = 0;
+        // data
+        // check byte
+        for (int i=0; i<8; i++) {
+            data[8] ^= data[i];
+        }
+        byteCount += 9;
+    }
 
     // data[0] = 0xb0;
     // data[1] = 0x13;
@@ -90,79 +163,13 @@ uint24_t HartMux::getUniqueAddr() { // cmd 0 by short address for gateway
     request.header.msgType = 0; // 0: Request
     request.header.msgId = 3;   // 3: Token-Passing PDU
     request.header.status = 0;  // 0: init to 0 by client
-    request.header.byteCount = sizeof(hart_ip_hdr_t) + sizeof(data); // 13 bytes of the whole frame for telegram
+    
+    sendData(data, byteCount);
 
-    cout << request.header.byteCount << endl;
-    sendData(data, sizeof(data));
-
-    uint8_t buf[37];
-    memset(buf, 0, 37);
-    int dataLen = recvData(buf);
-    if (dataLen < 0) return -1;
-    uint24_t deviceId = fromBytes<uint24_t>(&buf[9], 3);
-    cout << "deviceId = ";
-    printBytes(deviceId);
-
-    return deviceId;
-}
-
-int HartMux::sendCmd(unsigned char cmd) {
-    request.header.version = 1;
-    request.header.msgType = 0; // 0: Request
-    request.header.msgId = 3;   // 3: Token-Passing PDU
-    request.header.status = 0;  // 0: init to 0 by client
-    request.header.byteCount = 8; // 13 bytes of whole frame for telegram
-
-    // PDU frame
-    uint8_t delimiter = 2; // Frame Type STX 0x02(Indicates Slave or Burst Mode device)
-                        // ACK 0x06
-                        // BACK 0x01
-    uint8_t byteCnt = 0;
-
-    uint8_t data[32];
-    data[0] = delimiter;
-    data[1] = 0x80;
-    data[2] = cmd;
-    data[3] = byteCnt;
-    data[4] = delimiter ^ 0x80 ^ cmd ^ byteCnt; // check byte
-
-
-    // TODO: send packet to MUX
-
-    // TODO: get response from MUX
-
-    //serverInfo = fromBytes<muxPacketHeader>(request.header);
-    /*
-    response.body[0] // delimiter
-    response.body[1:5] // server address (short)
-    response.body[6] // server cmd
-    response.body[7] // server byteCnt
-    */
-    addressUniqGW[0] = response.body[7]; // Device type
-    addressUniqGW[1] = response.body[8];
-    addressUniqGW[2] = response.body[9]; // Device ID
-    addressUniqGW[3] = response.body[10];
-    addressUniqGW[4] = response.body[11];
-
-    if ((response.header.seqNo != request.header.seqNo) || response.header.status > 0) {
-        // TODO: more detailed error
-        err = true;
-        return 1;
-    } else {
-        if (request.header.seqNo > 0xfffe) {
-            request.header.seqNo = 1;
-        } else {
-            request.header.seqNo++;
-        }
-        
-        longAddressGW = "";
-        // for (int i=0; i<sizeof(addressUniqGW); i++) {
-        //     longAddressGW = longAddressGW << addressUniqGW[i]);
-        // }
-        
-    }
-
-    return 0;
+    uint8_t buf[512];
+    memset(buf, 0, 512);
+    
+    return recvData(buf);
 }
 
 int HartMux::send(uint8_t *bytes, size_t len, int flags) {
