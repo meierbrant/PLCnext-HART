@@ -113,22 +113,20 @@ int HartMux::sendCmd(unsigned char cmd, uint8_t pollAddr) {
     uint8_t data[512];
     memset(data, 0, sizeof(data));
     if (cmd == 0) {
-        /* PDU Frame */
-        // delimiter
-        data[0] = 0x02; // STX frame
-        // address
-        data[1] = 0x80 | pollAddr;
-        // expansion bytes (normally zero)
-        // command
-        data[2] = cmd;
-        // byte count
-        data[3] = 0;
-        // data
-        // check byte
-        for (int i=0; i<4; i++) {
-            data[4] ^= data[i];
-        }
-        byteCount += 5;
+        hart_pdu_frame f;
+        hart_pdu_delimiter d;
+        d.frameType = hart_pdu_delimiter::STX;
+        d.physicalLayerType = hart_pdu_delimiter::ASYNC;
+        d.numExpansionBytes = 0;
+        d.addressType = hart_pdu_delimiter::POLLING;
+        f.delimiter = d;
+        uint8_t del;
+        memcpy(&del, &d, 1);
+        cout << hex << "delimiter=" << (uint32_t)del << dec << endl;
+        f.addr = addrUniq;
+        f.cmd = cmd;
+        f.byteCnt = 0;
+        byteCount += serialize(f, data);
     } else {
         cout << "Error: short address only allowed for cmd 0" << endl;
         return -1;
@@ -154,46 +152,24 @@ int HartMux::sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData, s
     size_t byteCount = 0;
     uint8_t data[512];
     memset(data, 0, sizeof(data));
-    if (cmd == 0 || cmd == 74 | cmd == 84) {
-        /* PDU Frame */
-        // delimiter
-        data[0] = 0x82; // STX frame
-        // address
-        memcpy(&data[1], addrUniq, 5);
-        // expansion bytes (normally zero)
-        // command
-        data[6] = cmd;
-        // byte count
-        data[7] = reqDataCnt;
-        // data
-        memcpy(&data[8], reqData, reqDataCnt);
-        // check byte
-        for (int i=0; i<=7+reqDataCnt; i++) {
-            data[8+reqDataCnt] ^= data[i];
-        }
-        byteCount += 9 + reqDataCnt;
-    }
 
-    // data[0] = 0xb0;
-    // data[1] = 0x13;
-    // data[2] = 0xdd;
-    // data[3] = 0x49;
-    // data[4] = 0x14;
-    // data[8] = 0x02; // delimeter: Frame Type STX 0x02(Indicates Slave or Burst Mode device)
-	// 	                    // ACK  0x06
-	// 	                    // BACK 0x01
-    // data[9] = 0x80;
-    // data[10] = 0x00; // command
-    // data[11] = 0x00; // byte count; no data bytes
-
-    // uint8_t checkByte = data[8] ^ data[9] ^ data[10] ^ data[11];
-    // data[12] = checkByte;
+    hart_pdu_frame f;
+    hart_pdu_delimiter d;
+    d.frameType = hart_pdu_delimiter::STX;
+    d.physicalLayerType = hart_pdu_delimiter::ASYNC;
+    d.numExpansionBytes = 0;
+    d.addressType = hart_pdu_delimiter::UNIQUE;
+    f.delimiter = d;
+    f.addr = addrUniq;
+    f.cmd = cmd;
+    f.byteCnt = reqDataCnt;
+    f.data = reqData;
+    byteCount += serialize(f, data);
 
     request.header.version = 1;
     request.header.msgType = 0; // 0: Request
     request.header.msgId = 3;   // 3: Token-Passing PDU
     request.header.status = 0;  // 0: init to 0 by client
-    cout << "bcnt=" << byteCount << "\treqDataCnt=" << reqDataCnt << endl;
     sendData(data, byteCount);
 
     uint8_t buf[512];
@@ -226,7 +202,7 @@ int HartMux::recv(uint8_t *buf, size_t len, int flags) {
 int HartMux::sendHeader() {
     uint8_t bytes[request.header.byteCount];
     memset(bytes, 0, sizeof(bytes));
-    serializeHartIpHdr(request.header, bytes);
+    serialize(request.header, bytes);
     send(bytes, request.header.byteCount, 0);
 }
 
@@ -235,7 +211,7 @@ int HartMux::sendData(uint8_t *data, size_t len) {
     request.header.byteCount = len + sizeof(hart_ip_hdr_t);
     uint8_t bytes[request.header.byteCount];
     memset(bytes, 0, sizeof(bytes));
-    serializeHartIpHdr(request.header, bytes);
+    serialize(request.header, bytes);
     
     memcpy(&bytes[sizeof(hart_ip_hdr_t)], data, len);
     send(bytes, request.header.byteCount, 0);

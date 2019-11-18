@@ -41,22 +41,40 @@ struct hart_io_capabilities {
     uint8_t retryCnt; // 2 to 5, 3 is default
 };
 
-// struct hart_pdu_delimiter_t {
-//     HART_PDU_FRAME_TYPES frameType: 3;
-//     uint8_t physicalLayerType: 2;
-//     uint8_t numExpansionBytes: 2;
-//     uint8_t addressType: 1;
-// };
+struct hart_pdu_delimiter {
+    enum {
+        BACK = 1,
+        STX = 2,
+        ACK = 6
+    } frameType: 3;
+    enum {
+        ASYNC = 0,
+        SYNC = 1
+    } physicalLayerType: 2;
+    uint8_t numExpansionBytes: 2;
+    enum {
+        POLLING = 0,
+        UNIQUE = 1
+    } addressType: 1;
+};
 
-// enum HART_PDU_FRAME_TYPES {
-//     BACK = 1,
-//     STX = 2,
-//     ACK = 6
-// };
+struct hart_pdu_frame {
+    hart_pdu_delimiter delimiter;
+    uint8_t *addr;
+    uint8_t cmd;
+    uint8_t byteCnt;
+    uint8_t *data;
+    uint8_t chk;
+};
 
 void printBytes(uint8_t *bytes, size_t len);
-void serializeHartIpHdr(hart_ip_hdr_t header, uint8_t *bytes);
+
+void serialize(hart_ip_hdr_t header, uint8_t *bytes);
 hart_ip_hdr_t deserializeHartIpHdr(uint8_t *bytes);
+
+size_t serialize(hart_pdu_frame f, uint8_t *bytes);
+hart_pdu_frame deserializeHartPduFrame(uint8_t *bytes);
+
 
 template <typename T>
 T fromBytes(uint8_t* bytes) {

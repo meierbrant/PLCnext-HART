@@ -40,7 +40,42 @@ void printBytes(uint8_t *bytes, size_t len) {
     cout << dec << endl;
 }
 
-void serializeHartIpHdr(hart_ip_hdr_t header, uint8_t *bytes) {
+
+size_t serialize(hart_pdu_frame f, uint8_t *bytes) {
+    memcpy(bytes, &f.delimiter, 1);
+    // deal with varying address as indicated by delimiter
+    int nextAddr = 1;
+    if (f.delimiter.addressType == hart_pdu_delimiter::UNIQUE) {
+        memcpy(&bytes[1], f.addr, 5);
+        nextAddr += 5;
+    } else {
+        bytes[nextAddr++] = *f.addr | 0x80; // single byte polling addr
+    }
+    // deal with varying expansion bytes as indicated by delimeter
+    for (int i=0; i<f.delimiter.numExpansionBytes; i++) {
+        bytes[nextAddr++] = 0;
+    }
+
+    bytes[nextAddr++] = f.cmd;
+    bytes[nextAddr++] = f.byteCnt;
+    memcpy(&bytes[nextAddr], f.data, f.byteCnt);
+    nextAddr += f.byteCnt;
+    // calculate check byte
+    f.chk = 0;
+    for (int i=0; i<nextAddr; i++) {
+        f.chk ^= bytes[i];
+    }
+    bytes[nextAddr] = f.chk;
+
+    return nextAddr + 1;
+}
+
+hart_pdu_frame deserializeHartPduFrame(uint8_t *bytes) {
+
+}
+
+
+void serialize(hart_ip_hdr_t header, uint8_t *bytes) {
     bytes[0] = header.version;
     bytes[1] = header.msgType;
     bytes[2] = header.msgId;
