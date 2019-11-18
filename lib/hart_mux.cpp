@@ -60,21 +60,50 @@ uint8_t* HartMux::getUniqueAddr() { // cmd 0 by short address for gateway
     sendCmd(0, (uint8_t)0);
     // PDU frame up to data bytes should be 6 bytes
     uint16_t deviceTypeCode = (response.body[7] << 8) | response.body[8];
+    setTypeInfo(deviceTypeCode);
     addrUniq[0] = response.body[7];
     addrUniq[1] = response.body[8];
     memcpy(&addrUniq[2], &response.body[15], 3);
 
-    // ISSUE: for some reason this line causes response.body's bytes to be zeroed out
-    HartDevice hd(deviceTypeCode);
-    setTypeInfo(deviceTypeCode);
+    print();
 
-    memcpy(hd.addrUniq, addrUniq, 5);
     return (uint8_t *)addrUniq;
 }
 
 void HartMux::readIOSystemCapabilities() { // cmd 74
+    cout << "readIOSystemCapabilities()" << endl;
 
+    sendCmd(74, addrUniq);
+    ioCapabilities.maxIoCards = response.body[10];
+    ioCapabilities.maxChannels = response.body[11];
+    ioCapabilities.subDevicesPerCh = response.body[12];
+    ioCapabilities.numConnectedDevices = (response.body[13] << 8) | response.body[14];
+    ioCapabilities.numDelayedResp = response.body[15];
+    ioCapabilities.masterMode = response.body[16];
+    ioCapabilities.retryCnt = response.body[17];
 }
+
+HartDevice HartMux::readSubDeviceSummary(uint16_t index) {
+    uint8_t data[2];
+    serialize(index, data);
+    sendCmd(84, addrUniq, data, 2);
+
+    HartDevice d;
+    size_t pduHdrSize = 10;
+    memcpy(d.addrUniq, &response.body[pduHdrSize+6], 5);
+    d.ioCard = response.body[pduHdrSize+2];
+    d.channel = response.body[pduHdrSize+3];
+    d.manufacturerId = (response.body[pduHdrSize+4] << 8) | response.body[pduHdrSize+5];
+    d.cmdRevLvl = response.body[pduHdrSize+11];
+    char longTag[32];
+    memcpy(longTag, &response.body[pduHdrSize+12], 32);
+    d.longTag = string(longTag);
+    d.revision = response.body[pduHdrSize+44];
+    d.profile = response.body[pduHdrSize+45];
+    d.pvtLabelDistCode = (response.body[pduHdrSize+46] << 8) | response.body[pduHdrSize+47];
+    return d;
+}
+
 
 /**
  * pollAddr is zero by default since drop networks are not supported yet
@@ -121,11 +150,11 @@ int HartMux::sendCmd(unsigned char cmd, uint8_t pollAddr) {
 /**
  * param uniqueAddr is 5 bytes
  */
-int HartMux::sendCmd(unsigned char cmd, uint8_t *uniqueAddr) {
+int HartMux::sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData, size_t reqDataCnt) {
     size_t byteCount = 0;
     uint8_t data[512];
     memset(data, 0, sizeof(data));
-    if (cmd == 0 || cmd == 74) {
+    if (cmd == 0 || cmd == 74 | cmd == 84) {
         /* PDU Frame */
         // delimiter
         data[0] = 0x82; // STX frame
@@ -135,13 +164,14 @@ int HartMux::sendCmd(unsigned char cmd, uint8_t *uniqueAddr) {
         // command
         data[6] = cmd;
         // byte count
-        data[7] = 0;
+        data[7] = reqDataCnt;
         // data
+        memcpy(&data[8], reqData, reqDataCnt);
         // check byte
-        for (int i=0; i<8; i++) {
-            data[8] ^= data[i];
+        for (int i=0; i<=7+reqDataCnt; i++) {
+            data[8+reqDataCnt] ^= data[i];
         }
-        byteCount += 9;
+        byteCount += 9 + reqDataCnt;
     }
 
     // data[0] = 0xb0;
@@ -163,7 +193,7 @@ int HartMux::sendCmd(unsigned char cmd, uint8_t *uniqueAddr) {
     request.header.msgType = 0; // 0: Request
     request.header.msgId = 3;   // 3: Token-Passing PDU
     request.header.status = 0;  // 0: init to 0 by client
-    
+    cout << "bcnt=" << byteCount << "\treqDataCnt=" << reqDataCnt << endl;
     sendData(data, byteCount);
 
     uint8_t buf[512];
@@ -236,10 +266,7 @@ int HartMux::recvData(uint8_t *buf) {
             request.header.seqNo = 1;
         } else {
             request.header.seqNo++;
-        }
-        
-        longAddressGW = "";
-        
+        }        
     }
     
     // get rest of response from MUX
@@ -247,7 +274,6 @@ int HartMux::recvData(uint8_t *buf) {
     memset(buf, 0, sizeof(bdy_buf));
     int r = 0;
     if (sizeof(bdy_buf) > 0) {
-        cout << "TODO: handle receiving more data than buf allocated for" << endl;
         r = recv(buf, sizeof(bdy_buf), 0);
         response.body = buf;
         //*buf = bdy_buf;

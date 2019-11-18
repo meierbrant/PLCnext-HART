@@ -31,9 +31,15 @@ struct hart_ip_pkt_t {
     uint8_t *body;
 };
 
-// struct hart_pdu_frame_t {
-//     hart_pdu_delimiter_t delimiter;
-// };
+struct hart_io_capabilities {
+    uint8_t maxIoCards;
+    uint8_t maxChannels;
+    uint8_t subDevicesPerCh;
+    uint16_t numConnectedDevices;
+    uint8_t numDelayedResp;
+    uint8_t masterMode;
+    uint8_t retryCnt; // 2 to 5, 3 is default
+};
 
 // struct hart_pdu_delimiter_t {
 //     HART_PDU_FRAME_TYPES frameType: 3;

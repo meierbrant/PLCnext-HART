@@ -5,20 +5,24 @@
 #include "hart_device.hpp"
 #include <iostream>
 
+using std::string;
+
 class HartMux : public HartDevice {
     public:
     bool err;
-    std::string errMsg;
+    string errMsg;
     uint32_t inactivityTimeout;
     Socket sock;
+    hart_io_capabilities ioCapabilities;
 
-    HartMux(std::string ip) : sock(ip, "5094"), ipAddress(ip), inactivityTimeout(60000) {};
+    HartMux(string ip) : sock(ip, "5094"), ipAddress(ip), inactivityTimeout(60000) {};
     int initSession();
     int closeSession();
     uint8_t* getUniqueAddr(); // cmd 0
     void readIOSystemCapabilities(); // cmd 74
+    HartDevice readSubDeviceSummary(uint16_t index); // cmd 84
     int sendCmd(unsigned char cmd, uint8_t pollAddr);
-    int sendCmd(unsigned char cmd, uint8_t *uniqueAddr);
+    int sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData=NULL, size_t reqDataCnt=0);
 
 private:
     HartDevice devices[32];
@@ -37,8 +41,8 @@ private:
     bool activate = false;
     //bool poll = false;
     //long pollTime;
-    std::string ipAddress;
-    unsigned int IpPort = 5094;
+    string ipAddress;
+    unsigned int ipPort = 5094;
     uint8_t slotNo = 0;
     uint8_t channelNo = 0;
     uint8_t cmd = 0;
@@ -52,8 +56,6 @@ private:
     bool error = false;
     uint16_t diag = 0;
     uint16_t addDiag = 0;
-    std::string longAddressGW;
-    std::string longAddressCH;
     int dataOut = 0;
     int arrDataOut[256];
 

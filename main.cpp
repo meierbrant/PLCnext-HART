@@ -16,8 +16,19 @@ int main(int argc, char *argv[]) {
     HartMux hart_mux(HART_MUX_IP);
     hart_mux.initSession();
     uint8_t *addrUniq = hart_mux.getUniqueAddr();
-    hart_mux.sendCmd(74, addrUniq);
+    hart_mux.readIOSystemCapabilities();
+    HartDevice sensor = hart_mux.readSubDeviceSummary(1);
     hart_mux.closeSession();
 
+    cout << endl;
+    hart_mux.print();
+    cout << "max IO cards: " << (uint32_t)hart_mux.ioCapabilities.maxIoCards << endl;
+    cout << "max channels per IO card: " << (uint32_t)hart_mux.ioCapabilities.maxChannels << endl;
+    cout << "# of devices connected: " << (uint32_t)hart_mux.ioCapabilities.numConnectedDevices << endl;
+    cout << "master mode: " << (uint32_t)hart_mux.ioCapabilities.masterMode << endl;
+
+    cout << endl;
+    cout << "Sensor:" << endl;
+    sensor.print();
     return 0;
 }
