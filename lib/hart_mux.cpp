@@ -95,8 +95,9 @@ HartDevice HartMux::readSubDeviceSummary(uint16_t index) {
     d.channel = response.body[pduHdrSize+3];
     d.manufacturerId = (response.body[pduHdrSize+4] << 8) | response.body[pduHdrSize+5];
     d.cmdRevLvl = response.body[pduHdrSize+11];
-    char longTag[32];
+    char longTag[33];
     memcpy(longTag, &response.body[pduHdrSize+12], 32);
+    longTag[32] = 0x00;
     d.longTag = string(longTag);
     d.revision = response.body[pduHdrSize+44];
     d.profile = response.body[pduHdrSize+45];
