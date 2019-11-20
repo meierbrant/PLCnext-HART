@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     HartMux hart_mux(HART_MUX_IP);
     hart_mux.initSession();
     uint8_t *addrUniq = hart_mux.getUniqueAddr();
-    hart_mux.readIOSystemCapabilities();
+    hart_mux.autodiscoverSubDevices();
     HartDevice sensor = hart_mux.readSubDeviceSummary(1);
     hart_mux.closeSession();
 
@@ -28,7 +28,6 @@ int main(int argc, char *argv[]) {
     cout << "master mode: " << (uint32_t)hart_mux.ioCapabilities.masterMode << endl;
 
     cout << endl;
-    cout << "Sensor:" << endl;
-    sensor.print();
+    hart_mux.listDevices();
     return 0;
 }

@@ -22,12 +22,14 @@ void HartDevice::setTypeInfo(uint16_t code) {
 }
 
 void HartDevice::print() {
-    cout << name << " (" << company << ") " << "address: ";
-    printBytes((uint8_t *)addrUniq, 5);
-    cout << "mfr ID: " << hex << (uint32_t)manufacturerId << dec << endl;
-    cout << "HART revision: " << (uint32_t)cmdRevLvl << endl;
-    cout << "long tag: " << longTag << endl;
-    cout << "device revision: " << (uint32_t)revision << endl;
-    cout << "device profile: " << (uint32_t)profile << endl;
-    cout << "private label distributor code: " << hex << (uint32_t)pvtLabelDistCode << dec << endl;
+    cout << longTag << endl;
+    cout << "\taddress: "; printBytes((uint8_t *)addrUniq, 5);
+    cout << "\ttype: " << name << endl;
+    cout << "\tcompany: " << company << endl;
+    cout << "\tmfr ID: " << hex << (uint32_t)manufacturerId << dec << endl;
+    cout << "\tHART revision: " << (uint32_t)cmdRevLvl << endl;
+    cout << "\tlong tag: " << longTag << endl;
+    cout << "\tdevice revision: " << (uint32_t)revision << endl;
+    cout << "\tdevice profile: " << (uint32_t)profile << endl;
+    cout << "\tprivate label distributor code: " << hex << (uint32_t)pvtLabelDistCode << dec << endl;
 }

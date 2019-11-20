@@ -106,6 +106,23 @@ HartDevice HartMux::readSubDeviceSummary(uint16_t index) {
     return d;
 }
 
+void HartMux::autodiscoverSubDevices() {
+    readIOSystemCapabilities();
+    // zeroth device is itself
+    for (int i=0; i<ioCapabilities.numConnectedDevices; i++) {
+        devices[i] = readSubDeviceSummary(i+1);
+    }
+}
+
+void HartMux::listDevices() {
+    // zeroth device is itself
+    int n = ioCapabilities.numConnectedDevices - 1;
+    cout << "HART MUX has (" << n << ") devices connected:" << endl;
+    for (int i=0; i<n; i++) {
+        devices[i].print();
+        cout << endl;
+    }
+}
 
 /**
  * pollAddr is zero by default since drop networks are not supported yet

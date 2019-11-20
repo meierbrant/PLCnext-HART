@@ -21,6 +21,8 @@ class HartMux : public HartDevice {
     uint8_t* getUniqueAddr(); // cmd 0
     void readIOSystemCapabilities(); // cmd 74
     HartDevice readSubDeviceSummary(uint16_t index); // cmd 84
+    void autodiscoverSubDevices();
+    void listDevices();
     int sendCmd(unsigned char cmd, uint8_t pollAddr);
     int sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData=NULL, size_t reqDataCnt=0);
 
