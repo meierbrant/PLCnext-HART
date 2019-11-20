@@ -36,6 +36,8 @@ private:
     int sendHeader();
     int sendData(uint8_t *data, size_t len);
     int recvData(uint8_t *buf);
+    int sendPduFrame(hart_pdu_frame frame);
+    hart_pdu_frame recvPduFrame();
 
     /* Inputs */
     bool activate = false;

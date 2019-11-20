@@ -40,6 +40,22 @@ void printBytes(uint8_t *bytes, size_t len) {
     cout << dec << endl;
 }
 
+hart_pdu_frame buildPduFrame(uint8_t *addrUniq, uint8_t cmd, uint8_t *data, size_t dataSize) {
+    hart_pdu_frame f;
+    hart_pdu_delimiter d;
+    d.frameType = hart_pdu_delimiter::STX;
+    d.physicalLayerType = hart_pdu_delimiter::ASYNC;
+    d.numExpansionBytes = 0;
+    d.addressType = hart_pdu_delimiter::UNIQUE;
+    f.delimiter = d;
+    memcpy(f.addr, addrUniq, 5);
+    f.cmd = cmd;
+    memcpy(f.data, data, dataSize);
+    f.byteCnt = dataSize;
+
+    return f;
+}
+
 
 size_t serialize(hart_pdu_frame f, uint8_t *bytes) {
     memcpy(bytes, &f.delimiter, 1);
@@ -71,7 +87,39 @@ size_t serialize(hart_pdu_frame f, uint8_t *bytes) {
 }
 
 hart_pdu_frame deserializeHartPduFrame(uint8_t *bytes) {
+    hart_pdu_frame f;
+    hart_pdu_delimiter d;
+    f.delimiter = d;
+    memcpy(&d, bytes, 1);
+    // deal with varying address as indicated by delimiter
+    int nextAddr = 1;
+    if (d.addressType == hart_pdu_delimiter::UNIQUE) {
+        memcpy(f.addr, &bytes[nextAddr], 5);
+        nextAddr += 5;
+    } else {
+        f.addr[0] = bytes[nextAddr++]; // single byte polling addr
+    }
+    // deal with varying expansion bytes as indicated by delimeter
+    for (int i=0; i<d.numExpansionBytes; i++) {
+        nextAddr++;
+    }
+    f.cmd = bytes[nextAddr++];
+    f.byteCnt = bytes[nextAddr++];
+    memcpy(f.data, &bytes[nextAddr], f.byteCnt);
+    nextAddr += f.byteCnt;
+    // calculate check byte
+    f.chk = 0;
+    for (int i=0; i<nextAddr; i++) {
+        f.chk ^= bytes[i];
+    }
 
+    cout << "d.frameType=" << (uint32_t)d.frameType << endl;
+    cout << "f.addr="; printBytes(f.addr, 5);
+    cout << "f.cmd=" << (uint32_t)f.cmd << endl;
+    cout << "f.byteCnt=" << (uint32_t)f.byteCnt << endl;
+    cout << "f.data: "; printBytes(f.data, f.byteCnt);
+
+    return f;
 }
 
 

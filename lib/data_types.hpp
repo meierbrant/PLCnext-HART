@@ -60,12 +60,14 @@ struct hart_pdu_delimiter {
 
 struct hart_pdu_frame {
     hart_pdu_delimiter delimiter;
-    uint8_t *addr;
+    uint8_t addr[5];
     uint8_t cmd;
     uint8_t byteCnt;
-    uint8_t *data;
+    uint8_t data[255];
     uint8_t chk;
 };
+
+hart_pdu_frame buildPduFrame(uint8_t *addrUniq, uint8_t cmd, uint8_t *data=nullptr, size_t dataSize=0);
 
 void printBytes(uint8_t *bytes, size_t len);
 

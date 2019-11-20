@@ -84,6 +84,7 @@ void HartMux::readIOSystemCapabilities() { // cmd 74
 }
 
 HartDevice HartMux::readSubDeviceSummary(uint16_t index) {
+    cout << "readSubDeviceSummary()" << endl;
     uint8_t data[2];
     serialize(index, data);
     sendCmd(84, addrUniq, data, 2);
@@ -123,8 +124,7 @@ int HartMux::sendCmd(unsigned char cmd, uint8_t pollAddr) {
         f.delimiter = d;
         uint8_t del;
         memcpy(&del, &d, 1);
-        cout << hex << "delimiter=" << (uint32_t)del << dec << endl;
-        f.addr = addrUniq;
+        f.addr[0] = pollAddr;
         f.cmd = cmd;
         f.byteCnt = 0;
         byteCount += serialize(f, data);
@@ -150,28 +150,9 @@ int HartMux::sendCmd(unsigned char cmd, uint8_t pollAddr) {
  * param uniqueAddr is 5 bytes
  */
 int HartMux::sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData, size_t reqDataCnt) {
-    size_t byteCount = 0;
-    uint8_t data[512];
-    memset(data, 0, sizeof(data));
+    hart_pdu_frame f = buildPduFrame(uniqueAddr, cmd, reqData, reqDataCnt);
 
-    hart_pdu_frame f;
-    hart_pdu_delimiter d;
-    d.frameType = hart_pdu_delimiter::STX;
-    d.physicalLayerType = hart_pdu_delimiter::ASYNC;
-    d.numExpansionBytes = 0;
-    d.addressType = hart_pdu_delimiter::UNIQUE;
-    f.delimiter = d;
-    f.addr = addrUniq;
-    f.cmd = cmd;
-    f.byteCnt = reqDataCnt;
-    f.data = reqData;
-    byteCount += serialize(f, data);
-
-    request.header.version = 1;
-    request.header.msgType = 0; // 0: Request
-    request.header.msgId = 3;   // 3: Token-Passing PDU
-    request.header.status = 0;  // 0: init to 0 by client
-    sendData(data, byteCount);
+    sendPduFrame(f);
 
     uint8_t buf[512];
     memset(buf, 0, 512);
@@ -262,4 +243,22 @@ int HartMux::recvData(uint8_t *buf) {
     }
 
     return r;
+}
+
+int HartMux::sendPduFrame(hart_pdu_frame frame) {
+    uint8_t data[512];
+    size_t byteCount = serialize(frame, data);
+
+    request.header.version = 1;
+    request.header.msgType = 0; // 0: Request
+    request.header.msgId = 3;   // 3: Token-Passing PDU
+    request.header.status = 0;  // 0: init to 0 by client
+    sendData(data, byteCount);
+}
+
+hart_pdu_frame HartMux::recvPduFrame() {
+    uint8_t buf[512];
+    recvData(buf);
+    hart_pdu_frame f = deserializeHartPduFrame(buf);
+    return f;
 }
