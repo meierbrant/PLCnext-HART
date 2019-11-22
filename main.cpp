@@ -15,19 +15,25 @@ int main(int argc, char *argv[]) {
     
     HartMux hart_mux(HART_MUX_IP);
     hart_mux.initSession();
-    uint8_t *addrUniq = hart_mux.getUniqueAddr();
-    hart_mux.autodiscoverSubDevices();
+    // hart_mux.beginSubDeviceAutodiscovery(5);
     HartDevice sensor = hart_mux.readSubDeviceSummary(1);
-    hart_mux.closeSession();
 
     cout << endl;
     hart_mux.print();
-    cout << "max IO cards: " << (uint32_t)hart_mux.ioCapabilities.maxIoCards << endl;
-    cout << "max channels per IO card: " << (uint32_t)hart_mux.ioCapabilities.maxChannels << endl;
-    cout << "# of devices connected: " << (uint32_t)hart_mux.ioCapabilities.numConnectedDevices << endl;
-    cout << "master mode: " << (uint32_t)hart_mux.ioCapabilities.masterMode << endl;
+    cout << "\tmax IO cards: " << (uint32_t)hart_mux.ioCapabilities.maxIoCards << endl;
+    cout << "\tmax channels per IO card: " << (uint32_t)hart_mux.ioCapabilities.maxChannels << endl;
+    cout << "\t# of devices connected: " << (uint32_t)hart_mux.ioCapabilities.numConnectedDevices << endl;
+    cout << "\tmaster mode: " << (uint32_t)hart_mux.ioCapabilities.masterMode << endl;
 
     cout << endl;
-    hart_mux.listDevices();
+    
+    while (!hart_mux.stopAutodiscovery) {
+        hart_mux.autodiscoverSubDevices();
+        hart_mux.listDevices();
+        sleep(1);
+    }
+
+    hart_mux.closeSession();
+
     return 0;
 }

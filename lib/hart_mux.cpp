@@ -4,12 +4,14 @@
 #include "nettools.hpp"
 #include <string.h>
 
-#define DEBUG
+// #define DEBUG
 
 // Constructor defined in header
 
 int HartMux::initSession() {
+    #ifdef DEBUG
     cout << "initSession()" << endl;
+    #endif
     sock.connect();
     memset(&request, 0, sizeof(hart_ip_pkt_t));
 
@@ -33,11 +35,15 @@ int HartMux::initSession() {
     uint8_t data[13];
     recvData(data);
 
+    getUniqueAddr();
+
     return 0;
 }
 
 int HartMux::closeSession() {
+    #ifdef DEBUG
     cout << "closeSession()" << endl;
+    #endif
     request.header.version = 1;
     request.header.msgType = 0; // 0: request
     request.header.msgId = 1;   // 0: session close
@@ -55,7 +61,9 @@ int HartMux::closeSession() {
 }
 
 uint8_t* HartMux::getUniqueAddr() { // cmd 0 by short address for gateway
+    #ifdef DEBUG
     cout << "getUniqAddr()" << endl;
+    #endif
 
     sendCmd(0, (uint8_t)0);
     // PDU frame up to data bytes should be 6 bytes
@@ -65,13 +73,13 @@ uint8_t* HartMux::getUniqueAddr() { // cmd 0 by short address for gateway
     addrUniq[1] = response.body[8];
     memcpy(&addrUniq[2], &response.body[15], 3);
 
-    print();
-
     return (uint8_t *)addrUniq;
 }
 
 void HartMux::readIOSystemCapabilities() { // cmd 74
+    #ifdef DEBUG
     cout << "readIOSystemCapabilities()" << endl;
+    #endif
 
     sendCmd(74, addrUniq);
     ioCapabilities.maxIoCards = response.body[10];
@@ -84,7 +92,9 @@ void HartMux::readIOSystemCapabilities() { // cmd 74
 }
 
 HartDevice HartMux::readSubDeviceSummary(uint16_t index) {
+    #ifdef DEBUG
     cout << "readSubDeviceSummary()" << endl;
+    #endif
     uint8_t data[2];
     serialize(index, data);
     sendCmd(84, addrUniq, data, 2);
@@ -113,6 +123,16 @@ void HartMux::autodiscoverSubDevices() {
         devices[i] = readSubDeviceSummary(i+1);
     }
 }
+
+void HartMux::beginSubDeviceAutodiscovery(int seconds) {
+    stopAutodiscovery = false;
+    // thread autodiscoveryThread (autodiscoverLoop, this, seconds);
+}
+
+void HartMux::stopSubDeviceAutodiscovery() {
+    stopAutodiscovery = true;
+}
+
 
 void HartMux::listDevices() {
     // zeroth device is itself
@@ -278,4 +298,11 @@ hart_pdu_frame HartMux::recvPduFrame() {
     recvData(buf);
     hart_pdu_frame f = deserializeHartPduFrame(buf);
     return f;
+}
+
+void autodiscoverLoop(HartMux *mux, int seconds) {
+    while (!mux->stopAutodiscovery) {
+        mux->autodiscoverSubDevices();
+        sleep(seconds);
+    }
 }

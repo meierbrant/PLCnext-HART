@@ -4,8 +4,12 @@
 #include "socket.hpp"
 #include "hart_device.hpp"
 #include <iostream>
+#include <signal.h>
+#include <sys/time.h>
+#include <thread>
 
 using std::string;
+using std::thread;
 
 class HartMux : public HartDevice {
     public:
@@ -14,20 +18,24 @@ class HartMux : public HartDevice {
     uint32_t inactivityTimeout;
     Socket sock;
     hart_io_capabilities ioCapabilities;
+    bool stopAutodiscovery;
 
-    HartMux(string ip) : sock(ip, "5094"), ipAddress(ip), inactivityTimeout(60000) {};
+    HartMux(string ip) : sock(ip, "5094"), ipAddress(ip), inactivityTimeout(30000) {};
     int initSession();
     int closeSession();
     uint8_t* getUniqueAddr(); // cmd 0
     void readIOSystemCapabilities(); // cmd 74
     HartDevice readSubDeviceSummary(uint16_t index); // cmd 84
     void autodiscoverSubDevices();
+    void beginSubDeviceAutodiscovery(int seconds);
+    void stopSubDeviceAutodiscovery();
     void listDevices();
     int sendCmd(unsigned char cmd, uint8_t pollAddr);
     int sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData=NULL, size_t reqDataCnt=0);
 
 private:
     HartDevice devices[32];
+    thread autodiscoveryThread;
 
     /* HART General */
     hart_ip_pkt_t request;
@@ -64,3 +72,5 @@ private:
     int arrDataOut[256];
 
 };
+
+void autodiscoverLoop(HartMux *mux, int seconds);

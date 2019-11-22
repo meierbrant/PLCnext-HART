@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <iostream>
 
-#define DEBUG
+//#define DEBUG
 
 /**
  * designed based on this network programming guide:
