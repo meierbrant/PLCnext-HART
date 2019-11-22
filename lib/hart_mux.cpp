@@ -144,6 +144,26 @@ void HartMux::listDevices() {
     }
 }
 
+
+hart_var_set HartMux::readSubDeviceVars(HartDevice dev) {
+    cout << "readSubDeviceVars()" << endl;
+    hart_pdu_frame innerFrame = buildPduFrame(dev.addrUniq, 3);
+    uint8_t innerData[255];
+    size_t bCnt = 0;
+    innerData[bCnt++] = dev.ioCard;
+    innerData[bCnt++] = dev.channel;
+    innerData[bCnt++] = 5; // transmit preamble countserialize(innerFrame, innerData);
+    bCnt += serialize(innerFrame, &innerData[bCnt]);
+    hart_pdu_frame outerFrame = buildPduFrame(addrUniq, 77, innerData, bCnt);
+    
+    sendPduFrame(outerFrame);
+    hart_pdu_frame f = recvPduFrame();
+
+    hart_var_set vars;
+    return vars;
+}
+
+
 /**
  * pollAddr is zero by default since drop networks are not supported yet
  */

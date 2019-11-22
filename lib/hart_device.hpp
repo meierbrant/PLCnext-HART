@@ -5,6 +5,23 @@
 
 using std::string;
 
+enum hart_var_units {
+    DEG_CELCIUS = 32
+};
+
+struct hart_var {
+    hart_var_units units;
+    float value;
+};
+
+struct hart_var_set {
+    float loopCurrent; // in milliamps
+    hart_var var1;
+    hart_var var2;
+    hart_var var3;
+    hart_var var4;
+};
+
 class HartDevice {
 public:
     uint8_t addrUniq[5];
