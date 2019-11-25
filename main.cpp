@@ -12,30 +12,36 @@ int main(int argc, char *argv[]) {
     // if (nettools::ping(HART_MUX_IP.c_str()) == 0) {
     //     cout << "Successful ping @ " << HART_MUX_IP << endl;
     // }
+
+    Socket s;
+    s.bind("80");
+    // LEFTOFF: build a simple webserver
+    // https://www.codeproject.com/Articles/29290/A-C-Embedded-Web-Server
     
-    HartMux hart_mux(HART_MUX_IP);
-    hart_mux.initSession();
-    // hart_mux.beginSubDeviceAutodiscovery(5);
-    HartDevice sensor = hart_mux.readSubDeviceSummary(1);
-
-    hart_var_set sensor_vars = hart_mux.readSubDeviceVars(sensor);
-    displayVars(sensor_vars);
-    cout << endl;
-    hart_mux.print();
-    cout << "\tmax IO cards: " << (uint32_t)hart_mux.ioCapabilities.maxIoCards << endl;
-    cout << "\tmax channels per IO card: " << (uint32_t)hart_mux.ioCapabilities.maxChannels << endl;
-    cout << "\t# of devices connected: " << (uint32_t)hart_mux.ioCapabilities.numConnectedDevices << endl;
-    cout << "\tmaster mode: " << (uint32_t)hart_mux.ioCapabilities.masterMode << endl;
-
-    cout << endl;
     
-    while (!hart_mux.stopAutodiscovery) {
-        hart_mux.autodiscoverSubDevices();
-        hart_mux.listDevices();
-        sleep(1);
-    }
+    // HartMux hart_mux(HART_MUX_IP);
+    // hart_mux.initSession();
+    // // hart_mux.beginSubDeviceAutodiscovery(5);
+    // HartDevice sensor = hart_mux.readSubDeviceSummary(1);
 
-    hart_mux.closeSession();
+    // hart_var_set sensor_vars = hart_mux.readSubDeviceVars(sensor);
+    // displayVars(sensor_vars);
+    // cout << endl;
+    // hart_mux.print();
+    // cout << "\tmax IO cards: " << (uint32_t)hart_mux.ioCapabilities.maxIoCards << endl;
+    // cout << "\tmax channels per IO card: " << (uint32_t)hart_mux.ioCapabilities.maxChannels << endl;
+    // cout << "\t# of devices connected: " << (uint32_t)hart_mux.ioCapabilities.numConnectedDevices << endl;
+    // cout << "\tmaster mode: " << (uint32_t)hart_mux.ioCapabilities.masterMode << endl;
+
+    // cout << endl;
+    
+    // while (!hart_mux.stopAutodiscovery) {
+    //     hart_mux.autodiscoverSubDevices();
+    //     hart_mux.listDevices();
+    //     sleep(1);
+    // }
+
+    // hart_mux.closeSession();
 
     return 0;
 }
