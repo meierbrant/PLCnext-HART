@@ -140,6 +140,8 @@ void HartMux::listDevices() {
     cout << "HART MUX has (" << n << ") devices connected:" << endl;
     for (int i=0; i<n; i++) {
         devices[i].print();
+        hart_var_set vars = readSubDeviceVars(devices[i]);
+        displayVars(vars);
         cout << endl;
     }
 }
@@ -148,6 +150,7 @@ void HartMux::listDevices() {
 hart_var_set HartMux::readSubDeviceVars(HartDevice dev) {
     cout << "readSubDeviceVars()" << endl;
     hart_pdu_frame innerFrame = buildPduFrame(dev.addrUniq, 3);
+    innerFrame.addr[0] = innerFrame.addr[0] & 0x3f | 0x80; // long poll address
     uint8_t innerData[255];
     size_t bCnt = 0;
     innerData[bCnt++] = dev.ioCard;
@@ -158,8 +161,14 @@ hart_var_set HartMux::readSubDeviceVars(HartDevice dev) {
     
     sendPduFrame(outerFrame);
     hart_pdu_frame f = recvPduFrame();
+    while (f.byteCnt == 2) { // got a bad response
+        sendPduFrame(outerFrame);
+        f = recvPduFrame();
+    }
 
-    hart_var_set vars;
+    hart_pdu_frame f2 = deserializeHartPduFrame(&f.data[4]); // 4 is start of inner PDU frame
+
+    hart_var_set vars = deserializeHartVarSet(&f2.data[2], f2.byteCnt-2);
     return vars;
 }
 

@@ -113,11 +113,13 @@ hart_pdu_frame deserializeHartPduFrame(uint8_t *bytes) {
         f.chk ^= bytes[i];
     }
 
+    #ifdef DEBUG
     cout << "d.frameType=" << (uint32_t)d.frameType << endl;
     cout << "f.addr="; printBytes(f.addr, 5);
     cout << "f.cmd=" << (uint32_t)f.cmd << endl;
     cout << "f.byteCnt=" << (uint32_t)f.byteCnt << endl;
     cout << "f.data: "; printBytes(f.data, f.byteCnt);
+    #endif
 
     return f;
 }

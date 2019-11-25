@@ -30,6 +30,7 @@ class HartMux : public HartDevice {
     void beginSubDeviceAutodiscovery(int seconds);
     void stopSubDeviceAutodiscovery();
     void listDevices();
+    hart_var_set readSubDeviceVars(HartDevice dev);
     int sendCmd(unsigned char cmd, uint8_t pollAddr);
     int sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData=NULL, size_t reqDataCnt=0);
 

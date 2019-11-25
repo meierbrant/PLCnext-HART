@@ -18,6 +18,8 @@ int main(int argc, char *argv[]) {
     // hart_mux.beginSubDeviceAutodiscovery(5);
     HartDevice sensor = hart_mux.readSubDeviceSummary(1);
 
+    hart_var_set sensor_vars = hart_mux.readSubDeviceVars(sensor);
+    displayVars(sensor_vars);
     cout << endl;
     hart_mux.print();
     cout << "\tmax IO cards: " << (uint32_t)hart_mux.ioCapabilities.maxIoCards << endl;

@@ -5,22 +5,22 @@
 
 using std::string;
 
-enum hart_var_units {
-    DEG_CELCIUS = 32
-};
-
 struct hart_var {
-    hart_var_units units;
+    string units;
     float value;
 };
 
 struct hart_var_set {
     float loopCurrent; // in milliamps
-    hart_var var1;
-    hart_var var2;
-    hart_var var3;
-    hart_var var4;
+    hart_var pv;
+    hart_var sv;
+    hart_var tv;
+    hart_var qv;
 };
+
+string getUnitsFromCode(uint8_t code);
+hart_var_set deserializeHartVarSet(uint8_t *bytes, size_t bCnt);
+void displayVars(hart_var_set vars);
 
 class HartDevice {
 public:
