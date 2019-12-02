@@ -3,20 +3,30 @@
 #include "lib/nettools.hpp"
 #include "lib/socket.hpp"
 #include "lib/hart_mux.hpp"
+#include "lib/cpp-httplib/httplib.h"
 
 using namespace std;
 
-string HART_MUX_IP = "192.168.254.26";
+// NOTE: this must be compiled with the -pthread flag because the httpserver is multithreaded
+
+string HART_MUX_IP = "192.168.254.254";
+
+void webserver() {
+    // https://github.com/yhirose/cpp-httplib
+    using namespace httplib;
+
+    Server s;
+    s.Get("/", [](const Request& req, Response& res) {
+        res.set_content("This is the beginnings of a HART MUX web API!\n", "text/plain");
+    });
+
+    s.listen("localhost", 5900);
+}
 
 int main(int argc, char *argv[]) {
     // if (nettools::ping(HART_MUX_IP.c_str()) == 0) {
     //     cout << "Successful ping @ " << HART_MUX_IP << endl;
     // }
-
-    Socket s;
-    s.bind("80");
-    // LEFTOFF: build a simple webserver
-    // https://www.codeproject.com/Articles/29290/A-C-Embedded-Web-Server
     
     
     // HartMux hart_mux(HART_MUX_IP);
@@ -42,6 +52,9 @@ int main(int argc, char *argv[]) {
     // }
 
     // hart_mux.closeSession();
+
+    // web server on port 5900
+    webserver();
 
     return 0;
 }
