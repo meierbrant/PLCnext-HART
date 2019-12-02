@@ -3,6 +3,7 @@
 #include "data_types.hpp"
 #include "socket.hpp"
 #include "hart_device.hpp"
+#include "nlohmann/json.hpp"
 #include <iostream>
 #include <signal.h>
 #include <sys/time.h>
@@ -10,6 +11,7 @@
 
 using std::string;
 using std::thread;
+using nlohmann::json;
 
 class HartMux : public HartDevice {
     public:
@@ -33,6 +35,7 @@ class HartMux : public HartDevice {
     hart_var_set readSubDeviceVars(HartDevice dev);
     int sendCmd(unsigned char cmd, uint8_t pollAddr);
     int sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData=NULL, size_t reqDataCnt=0);
+    json to_json();
 
 private:
     HartDevice devices[32];

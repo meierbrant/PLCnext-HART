@@ -2,8 +2,10 @@
 
 #include <cinttypes>
 #include <iostream>
+#include "nlohmann/json.hpp"
 
 using std::string;
+using nlohmann::json;
 
 struct hart_var {
     string units;
@@ -43,6 +45,7 @@ public:
     HartDevice();
     HartDevice(uint16_t deviceTypeCode);
     void setTypeInfo(uint16_t code);
+    json to_json();
     void print();
 
 private:

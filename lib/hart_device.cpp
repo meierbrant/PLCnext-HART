@@ -1,5 +1,6 @@
 #include "hart_device.hpp"
 #include "data_types.hpp"
+#include "nlohmann/json.hpp"
 
 using std::cout;
 using std::endl;
@@ -81,4 +82,19 @@ void displayVars(hart_var_set vars) {
     cout << "\tsv: " << vars.sv.value << vars.sv.units << endl;
     cout << "\ttv: " << vars.tv.value << vars.tv.units << endl;
     cout << "\tqv: " << vars.qv.value << vars.qv.units << endl;
+}
+
+json HartDevice::to_json() {
+    json data = {
+        {"name", name},
+        {"company", company},
+        {"manufacturerId", manufacturerId},
+        {"cmdRevLvl", cmdRevLvl},
+        {"longTag", longTag},
+        {"revision", revision},
+        {"profile", profile},
+        {"privateLabelDistCode", pvtLabelDistCode}
+    };
+
+    return data;
 }

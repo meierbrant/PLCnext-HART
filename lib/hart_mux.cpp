@@ -2,9 +2,12 @@
 #include "hart_devices.hpp"
 
 #include "nettools.hpp"
+#include "nlohmann/json.hpp"
 #include <string.h>
 
-// #define DEBUG
+#define DEBUG
+
+using nlohmann::json;
 
 // Constructor defined in header
 
@@ -93,7 +96,7 @@ void HartMux::readIOSystemCapabilities() { // cmd 74
 
 HartDevice HartMux::readSubDeviceSummary(uint16_t index) {
     #ifdef DEBUG
-    cout << "readSubDeviceSummary()" << endl;
+    cout << "readSubDeviceSummary() " << index << "/" << ioCapabilities.numConnectedDevices << " devices" << endl;
     #endif
     uint8_t data[2];
     serialize(index, data);
@@ -334,4 +337,17 @@ void autodiscoverLoop(HartMux *mux, int seconds) {
         mux->autodiscoverSubDevices();
         sleep(seconds);
     }
+}
+
+json HartMux::to_json() {
+    json data = HartDevice::to_json();
+
+    data["devices"] = {};
+    // zeroth device is itself
+    int n = ioCapabilities.numConnectedDevices - 1;
+    for (int i=0; i<n; i++) {
+        data["devices"][i] = devices[i].to_json();
+    }
+
+    return data;
 }
