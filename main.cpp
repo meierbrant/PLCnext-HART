@@ -50,6 +50,7 @@ int main(int argc, char *argv[]) {
 
     Server s;
     s.Get("/", [](const Request& req, Response& res) {
+        res.set_header("Access-Control-Allow-Origin", "*");
         res.set_content("This is the beginnings of a HART MUX web API!\n\n\
         Routes:\n\
         GET\t/\twelcome page\n\
@@ -58,6 +59,7 @@ int main(int argc, char *argv[]) {
 
     s.Get("/info", [&hart_mux](const Request& req, Response& res) {
         hart_mux.autodiscoverSubDevices();
+        res.set_header("Access-Control-Allow-Origin", "*");
         res.set_content(hart_mux.to_json().dump(), "text/json");
     });
 
