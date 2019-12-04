@@ -1,16 +1,16 @@
 <html>
 <head>
     <title>PLCnext HART HMI</title>
-    <script type='text/javascript' src='jquery.min.js'></script>
+    <script data-main="scripts/main" src="scripts/lib/require.js"></script>
 </head>
 <body>
     <h3>To Do:</h3>
     <ul>
-        <li>Make a C++ server to provide the HART device info and allow controlling it.</li>
+        <li>Either make the C++ server ping the HART MUX to keep-alive or reconnect to it each time.</li>
         <li>Go through <a href="http://learn.knockoutjs.com/#/?tutorial=collections">Knockout.js tutorials</a></li>
     </ul>
 
-    <script type='text/javascript' src='knockout.min.js'></script>
-    <script type='text/javascript' src='main.js'></script>
+    <hart-device></hart-device>
+
 </body>
 </html>
