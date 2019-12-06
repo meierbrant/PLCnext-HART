@@ -1,0 +1,9 @@
+.hart-mux-graphic-segment {
+    /* text-align: center; */
+}
+
+.hart-mux-graphic {
+    background-image: url("/img/connection-bg.png");
+    background-repeat: repeat-x;
+    background-size: 1px 200px;
+}
