@@ -17,9 +17,5 @@ requirejs.config({
 });
 
 requirejs(['jquery', 'knockout', 'knockstrap', 'bootstrap', '../components/all'], function($, ko) {
-    $.get("http://localhost:5900/info", {}, function(data) {
-        console.log(data);
-    });
-
     ko.applyBindings();
 });

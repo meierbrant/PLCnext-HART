@@ -2,16 +2,13 @@
 <head>
     <title>PLCnext HART HMI</title>
     <link rel="stylesheet" type="text/css" href="css/bootstrap-3.4.1/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
     <script data-main="scripts/main" src="scripts/lib/require.js"></script>
 </head>
 <body>
-    <h3>To Do:</h3>
-    <ul>
-        <li>Either make the C++ server ping the HART MUX to keep-alive or reconnect to it each time.</li>
-        <li>Go through <a href="http://learn.knockoutjs.com/#/?tutorial=collections">Knockout.js tutorials</a></li>
-    </ul>
-
-    <hart-device></hart-device>
+    <div class="container">
+        <hart-live-device-list></hart-live-device-list>
+    </div>
 
 </body>
 </html>

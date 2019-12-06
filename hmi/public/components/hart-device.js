@@ -2,16 +2,17 @@ define([
     'knockout',
     'exports',
     'text!../components/hart-device.html'
-], function (ko, hartDevice, template) {
+], function (ko, component, template) {
 
     function HartDevice(params) {
-        this.name = "Generic HART device"
+        this.longTag = "Generic HART device";
+        this.cmdRevLvl = "7";
     }
 
-    hartDevice.viewModel = HartDevice; 
-    hartDevice.template = template;
+    component.viewModel = HartDevice; 
+    component.template = template;
 
-    ko.components.register('hart-device', hartDevice);
+    ko.components.register('hart-device', component);
 
 });
   
