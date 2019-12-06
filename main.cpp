@@ -58,7 +58,9 @@ int main(int argc, char *argv[]) {
     });
 
     s.Get("/info", [&hart_mux](const Request& req, Response& res) {
+        hart_mux.initSession();
         hart_mux.autodiscoverSubDevices();
+        hart_mux.closeSession();
         res.set_header("Access-Control-Allow-Origin", "*");
         res.set_content(hart_mux.to_json().dump(), "text/json");
     });
@@ -79,9 +81,6 @@ int main(int argc, char *argv[]) {
 
     s.listen("localhost", 5900);
     // end webserver
-
-
-    hart_mux.closeSession();
 
     return 0;
 }
