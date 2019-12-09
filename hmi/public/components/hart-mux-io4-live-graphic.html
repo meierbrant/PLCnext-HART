@@ -1,3 +1,7 @@
-<div>
-    <img src="/img/hart_mux_io4_facade.png" />
+<!-- 4-channel block -->
+<div class="io4-grid add-facade" data-bind="foreach: { data: devices, as: 'dev' }">
+    <hart-mux-graphic-device params="device: dev"
+        data-bind="style: { 
+            gridColumnStart: 1, 
+            gridRowStart: dev.ioChannel > 2 ? dev.ioChannel + 1 : dev.ioChannel }"></hart-mux-graphic-device>
 </div>

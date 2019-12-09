@@ -1,9 +1,39 @@
-.hart-mux-graphic-segment {
-    /* text-align: center; */
+hart-mux-graphic-device {
+    background: yellow;
+    border: 1px solid black;
 }
 
 .hart-mux-graphic {
     background-image: url("/img/connection-bg.png");
     background-repeat: repeat-x;
     background-size: 1px 200px;
+    background-position-y: center;
+    display: grid;
+    grid-template-columns: repeat(4, 10em [col-start]);
+    grid-template-rows: auto;
+}
+
+.hart-mux-graphic div {
+    text-align: center;
+}
+
+.io4-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 10em [col-start]);
+    grid-template-rows: 5em 5em 200px 5em 5em;
+}
+
+hart-mux-io8-live-graphic {
+    grid-column-start: span 2;
+}
+
+.io8-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 10em [col-start]);
+    grid-template-rows: 5em 5em 200px 5em 5em;
+}
+
+.io8-grid .hart-facade {
+    grid-row-start: 3;
+    grid-column-start: span 2;
 }
