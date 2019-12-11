@@ -5,8 +5,22 @@ define([
 ], function (ko, component, template) {
 
     function HartMuxGraphicDevice(params) {
-        this.name = params.device.name;
-        this.ioChannel = params.device.ioChannel;
+        this.device = params.device;
+        this.status = ko.computed(() => {
+            if (this.device() !== undefined) {
+                return "online";
+            } else {
+                return "offline";
+            }
+        });
+        this.popoverSettings = {};
+        if (this.device() !== undefined) {
+            this.popoverSettings.options = {
+                title: this.device().longTag,
+                content: "IO channel: " + this.device().ioChannel,
+                trigger: this.status() == "online" ? 'hover' : ''
+            }
+        }
     }
 
     component.viewModel = HartMuxGraphicDevice; 

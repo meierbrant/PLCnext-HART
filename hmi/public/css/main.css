@@ -1,15 +1,10 @@
-hart-mux-graphic-device {
-    background: yellow;
-    border: 1px solid black;
-}
-
 .hart-mux-graphic {
     background-image: url("/img/connection-bg.png");
     background-repeat: repeat-x;
     background-size: 1px 200px;
     background-position-y: center;
     display: grid;
-    grid-template-columns: repeat(4, 10em [col-start]);
+    grid-template-columns: repeat(4, 40px [col-start]);
     grid-template-rows: auto;
 }
 
@@ -17,10 +12,33 @@ hart-mux-graphic-device {
     text-align: center;
 }
 
+hart-mux-graphic-device {
+    display: flex;
+}
+
+.hart-mux-graphic .circle-indicator {
+    border: 2px solid black;
+    border-radius: 12px;
+    background: none;
+    width: 24px;
+    height: 24px;
+    margin: auto;
+    cursor: pointer;
+}
+
+.hart-mux-graphic .circle-indicator.online {
+    background: #00bd00;
+}
+
 .io4-grid {
     display: grid;
-    grid-template-columns: repeat(1, 10em [col-start]);
-    grid-template-rows: 5em 5em 200px 5em 5em;
+    grid-template-columns: repeat(1, 40px [col-start]);
+    grid-template-rows: 40px 40px 200px 40px 40px;
+}
+
+.io4-grid .hart-facade {
+    grid-row-start: 3;
+    grid-column-start: span 1;
 }
 
 hart-mux-io8-live-graphic {
@@ -29,8 +47,8 @@ hart-mux-io8-live-graphic {
 
 .io8-grid {
     display: grid;
-    grid-template-columns: repeat(2, 10em [col-start]);
-    grid-template-rows: 5em 5em 200px 5em 5em;
+    grid-template-columns: repeat(2, 40px [col-start]);
+    grid-template-rows: 40px 40px 200px 40px 40px;
 }
 
 .io8-grid .hart-facade {
