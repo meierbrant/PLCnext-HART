@@ -7,6 +7,18 @@ define([
     function HartDevice(params) {
         this.longTag = "Generic HART device";
         this.cmdRevLvl = "7";
+        this.cmd = 0;
+        this.cmdResponse = {
+            data: "Result of command goes here..."
+        };
+
+        this.sendCmd = function(cmd) {
+            console.log("send command " + cmd);
+            const result = {
+                data: "You sent command " + cmd
+            };
+            this.cmdResponse = result;
+        };
     }
 
     component.viewModel = HartDevice; 

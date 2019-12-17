@@ -1,3 +1,12 @@
+/* green: #96be0d */
+/* blue: #0099a1 */
+/* darker blue: #00868d */
+/* grey: #aec8d2 */
+
+.navbar-brand img {
+    height: 24px;
+}
+
 .hart-mux-graphic {
     background-image: url("/img/connection-bg.png");
     background-repeat: repeat-x;
@@ -27,7 +36,7 @@ hart-mux-graphic-device {
 }
 
 .hart-mux-graphic .circle-indicator.online {
-    background: #00bd00;
+    background: #96be0d;
 }
 
 .io4-grid {
