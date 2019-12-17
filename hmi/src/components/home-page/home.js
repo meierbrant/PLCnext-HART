@@ -3,7 +3,7 @@ import homeTemplate from 'text!./home.html';
 
 class HomeViewModel {
     constructor(route) {
-        this.message = ko.observable('Welcome to hart-management-system!');
+        this.message = ko.observable('Welcome to pxc-hart-management!');
     }
     
     doSomething() {
