@@ -93,7 +93,9 @@ json HartDevice::to_json() {
         {"longTag", longTag},
         {"revision", revision},
         {"profile", profile},
-        {"privateLabelDistCode", pvtLabelDistCode}
+        {"privateLabelDistCode", pvtLabelDistCode},
+        {"ioCard", ioCard},
+        {"channel", channel}
     };
 
     return data;
