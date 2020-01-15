@@ -1,0 +1,72 @@
+$theme-colors: (
+  "primary": #96be0d, // PxC green
+  "secondary": #0099a1 // PxC blue
+);
+
+$grey: #aec8d2;
+
+@import 'node_modules/bootstrap/scss/bootstrap';
+@import 'node_modules/bootstrap-vue/src/index.scss';
+
+/* green: #96be0d */
+/* blue: #0099a1 */
+/* grey: #aec8d2 */
+
+.btn-primary {
+    color: $light;
+}
+
+.navbar-brand img {
+    height: 24px;
+}
+
+.hart-mux-graphic {
+    background-image: url("assets/img/connection-bg.png");
+    background-repeat: repeat-x;
+    background-size: 1px 200px;
+    background-position-y: center;
+    display: grid;
+    grid-template-columns: repeat(8, 48px [col-start]);
+    grid-template-rows: auto;
+
+    div {
+        text-align: center;
+    }
+
+    .circle-indicator {
+        border: 2px solid black;
+        border-radius: 12px;
+        background: none;
+        width: 24px;
+        height: 24px;
+        margin: auto;
+        cursor: pointer;
+
+        &.online {
+            background: #96be0d;
+        }
+    }
+}
+
+.io4-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 40px [col-start]);
+    grid-template-rows: 40px 40px 200px 40px 40px;
+
+    .hart-facade {
+        grid-row-start: 3;
+        grid-column-start: span 1;
+    }
+}
+
+.io8-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 40px [col-start]);
+    grid-template-rows: 40px 40px 200px 40px 40px;
+    grid-column-start: span 2;
+
+    .hart-facade {
+        grid-row-start: 3;
+        grid-column-start: span 2;
+    }
+}

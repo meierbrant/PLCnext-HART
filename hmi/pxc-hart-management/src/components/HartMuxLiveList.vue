@@ -1,0 +1,62 @@
+<template>
+    <div id="hart-live-list">
+        <h3><span data-bind="text: gateway"></span> Live List</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Long Tag</th>
+                    <th>Name</th>
+                    <th>Company</th>
+                    <th>Hart Revision</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="dev in devices" v-bind:key="10*dev.ioCard + dev.channel">
+                    <td>{{ dev.longTag }}</td>
+                    <td>{{ dev.name }}</td>
+                    <td>{{ dev.company }}</td>
+                    <td>{{ dev.cmdRevLvl }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</template>
+
+<script lang="ts">
+import { Vue, Component, Prop } from 'vue-property-decorator';
+import { HartDeviceDto, HartMuxDto, hartServerUrl } from '../types'
+
+const dummyHartDevice = {
+    name: "dummy device",
+    company: "Phoenix Contact",
+    longTag: "Dummy Long Tag",
+    cmdRevLvl: 7,
+    manufacturerId: 17,
+    privateLabelDistCode: 0,
+    profile: 1,
+    revision: 1
+}
+
+@Component
+export default class HartMuxLiveList extends Vue {
+    public devices: HartDeviceDto[] = []
+
+    mounted() {
+        console.log("mounted")
+        this.refreshDevices()
+        setInterval(this.refreshDevices, 2000)
+    }
+
+    public refreshDevices() {
+        this.$http.get(hartServerUrl + '/info').then((res) => {
+            const data = res.data as HartMuxDto
+            let list: HartDeviceDto[] = []
+            let id = 1
+            data.devices.forEach(device => {
+                list.push(device)
+            })
+            this.devices = list
+        })
+    }
+}
+</script>
