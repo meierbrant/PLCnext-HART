@@ -26,7 +26,6 @@ int UdpSocket::sendto(string ip, const char *msg, size_t len, int flags) {
     if (::sendto(sockfd, msg, len, flags, (struct sockaddr *) 
         &destAddr, sizeof(destAddr)) != len)
         perror("sendto() sent a different number of bytes than expected");
-    // cout << "sent to: " << ip << endl;
 }
 
 
@@ -35,7 +34,6 @@ int UdpSocket::recvfrom(string &ip, char *buf, size_t len, int flags) {
     socklen_t l;
     struct sockaddr_in srcAddr;
     char tmpAddr[INET_ADDRSTRLEN];
-    cout << endl;
     
     memset(&srcAddr, 0, sizeof(srcAddr));
     srcAddr.sin_family = AF_INET;
