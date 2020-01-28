@@ -21,6 +21,7 @@ class HartMux : public HartDevice {
     Socket sock;
     hart_io_capabilities ioCapabilities;
     bool stopAutodiscovery;
+    HartDevice devices[32];
 
     HartMux(string ip) : sock(ip, "5094"), ipAddress(ip), inactivityTimeout(30000) {};
     int initSession();
@@ -35,10 +36,10 @@ class HartMux : public HartDevice {
     hart_var_set readSubDeviceVars(HartDevice dev);
     int sendCmd(unsigned char cmd, uint8_t pollAddr);
     int sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData=NULL, size_t reqDataCnt=0);
+    void sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt);
     json to_json();
 
 private:
-    HartDevice devices[32];
     thread autodiscoveryThread;
 
     /* HART General */

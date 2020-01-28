@@ -27,7 +27,7 @@
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
-import { HartDeviceDto, hartServerUrl, HartMuxDto } from '../../types'
+import { HartDeviceDto, hartServerUrl, HartMuxDto, HartGw } from '../../types'
 import DeviceBubble from './DeviceBubble.vue'
 
 @Component({
@@ -37,6 +37,7 @@ import DeviceBubble from './DeviceBubble.vue'
 })
 export default class HartMuxIo4Card extends Vue {
     @Prop() ioCard: number
+    @Prop() gw: HartGw
     public devices: (HartDeviceDto | undefined)[] = []
     private polling: number
 
@@ -50,8 +51,7 @@ export default class HartMuxIo4Card extends Vue {
     }
 
     public updateDevices () {
-        console.log("ioCard = " + this.ioCard)
-        this.$http.get(hartServerUrl + '/info').then(res => {
+        this.$http.get(hartServerUrl + '/gw/' + this.gw.serialNo + '/info').then(res => {
             const data = res.data as HartMuxDto
             const deviceData = data.devices
             const deviceNums = [...Array(8).keys()]

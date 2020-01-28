@@ -1,7 +1,8 @@
 <template>
     <div class="circle-indicator" v-bind:class="{ online: status == 'online' }"
-        v-b-popover.hover.top="'deviceData.name'"
-        v-bind:title="'device.longTag'"></div>
+        v-b-popover.hover.top="'name'"
+        v-bind:title="'longTag'"
+        v-on:click="routeToShowDevice()"></div>
 </template>
 
 <script lang="ts">
@@ -22,8 +23,17 @@ export default class DeviceBubble extends Vue {
         return this.deviceData !== undefined ? 'online' : 'offline'
     }
 
-    get name(): string {
-        return this.deviceData.name
+    // get name(): string {
+    //     console.log(this.deviceData())
+    //     return this.deviceData !== undefined ? this.deviceData().name : 'device name'
+    // }
+
+    // get description(): string {
+    //     return this.deviceData !== undefined ? this.deviceData().longTag : 'device tag'
+    // }
+
+    routeToShowDevices() {
+
     }
 }
 </script>

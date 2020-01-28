@@ -5,7 +5,7 @@
 #include "nlohmann/json.hpp"
 #include <string.h>
 
-#define DEBUG
+// #define DEBUG
 
 using nlohmann::json;
 
@@ -229,6 +229,15 @@ int HartMux::sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData, s
     return recvData(buf);
 }
 
+void HartMux::sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt) {
+    hart_pdu_frame f = buildPduFrame(uniqueAddr, cmd, reqData, reqDataCnt);
+
+    sendPduFrame(f);
+
+    memset(resData, 0, 512);
+    resDataCnt = recvData(resData);
+}
+
 int HartMux::send(uint8_t *bytes, size_t len, int flags) {
     int r = sock.send(bytes, len, flags);
     if (r < 0) {
@@ -295,20 +304,25 @@ int HartMux::recvData(uint8_t *buf) {
             request.header.seqNo++;
         }        
     }
-    
-    // get rest of response from MUX
-    uint8_t bdy_buf[response.header.byteCount - sizeof(hart_ip_hdr_t)];
-    memset(buf, 0, sizeof(bdy_buf));
+
     int r = 0;
-    if (sizeof(bdy_buf) > 0) {
-        r = recv(buf, sizeof(bdy_buf), 0);
-        response.body = buf;
-        //*buf = bdy_buf;
-        #ifdef DEBUG
-        cout << "received data (network byte order):" << endl;
-        printBytes(response.body, sizeof(bdy_buf));
-        cout << endl;
-        #endif
+    // ignore obviously corrupt transmissions
+    if (response.header.byteCount < 65536) {
+        
+    
+        // get rest of response from MUX
+        uint8_t bdy_buf[response.header.byteCount - sizeof(hart_ip_hdr_t)];
+        memset(buf, 0, sizeof(bdy_buf));
+        if (sizeof(bdy_buf) > 0) {
+            r = recv(buf, sizeof(bdy_buf), 0);
+            response.body = buf;
+            //*buf = bdy_buf;
+            #ifdef DEBUG
+            cout << "received data (network byte order):" << endl;
+            printBytes(response.body, sizeof(bdy_buf));
+            cout << endl;
+            #endif
+        }
     }
 
     return r;
@@ -342,6 +356,7 @@ void autodiscoverLoop(HartMux *mux, int seconds) {
 json HartMux::to_json() {
     json data = HartDevice::to_json();
 
+    data["ipAddress"] = ipAddress;
     data["devices"] = {};
     // zeroth device is itself
     int n = ioCapabilities.numConnectedDevices - 1;
