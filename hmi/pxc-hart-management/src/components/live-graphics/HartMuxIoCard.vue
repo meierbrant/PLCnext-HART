@@ -39,16 +39,12 @@ export default class HartMuxIoCard extends Vue {
     @Prop() ioCard: number
     @Prop() gw: HartGw
     @Prop() modType: string
-    public devices: (HartDeviceDto | undefined)[] = []
-    private polling: number = 0
+    @Prop() deviceData: HartDeviceDto[]
 
     mounted () {
-        this.updateDevices()
-        this.polling = setInterval(this.updateDevices, 2000)
     }
 
     beforeDestroy () {
-        clearInterval(this.polling)
     }
 
     get isIo4 (): boolean {
@@ -59,19 +55,15 @@ export default class HartMuxIoCard extends Vue {
         return this.modType.includes('HART8')
     }
 
-    public updateDevices () {
-        this.$http.get(hartServerUrl + '/gw/' + this.gw.serialNo + '/info').then(res => {
-            const data = res.data as HartMuxDto
-            const deviceData = data.devices
-            let deviceNums: any[] = []
-            if (this.isIo4) deviceNums = [...Array(4).keys()]
-            if (this.isIo8) deviceNums = [...Array(8).keys()]
-            let devices: (HartDeviceDto | undefined)[] = []
-            deviceNums.forEach(i => {
-                devices[i] = deviceData.find(d => d.channel == i && d.ioCard == this.ioCard);
-            })
-            this.devices = devices
+    get devices (): (HartDeviceDto | undefined)[] {
+        let deviceNums: any[] = []
+        if (this.isIo4) deviceNums = [...Array(4).keys()]
+        if (this.isIo8) deviceNums = [...Array(8).keys()]
+        let devices: (HartDeviceDto | undefined)[] = []
+        deviceNums.forEach(i => {
+            devices[i] = this.deviceData.find(d => d.channel == i && d.ioCard == this.ioCard);
         })
+        return devices
     }
 }
 </script>

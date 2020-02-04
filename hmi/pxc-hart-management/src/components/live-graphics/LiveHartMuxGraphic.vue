@@ -8,7 +8,7 @@
             </div>
         </div>
 
-        <HartMuxIoCard v-for="(mod, i) in gw.modules" v-bind:key="i" :gw="gw" :ioCard="i" :modType="mod" />
+        <HartMuxIoCard v-for="(mod, i) in gw.modules" v-bind:key="i" :gw="gw" :ioCard="i" :modType="mod" :deviceData="deviceData"/>
     </div>
 </div>
 </template>
@@ -16,7 +16,7 @@
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
 import HartMuxIoCard from '@/components/live-graphics/HartMuxIoCard.vue'
-import { hartServerUrl, HartMuxDto, HartGw, HartGwDto } from '../../types'
+import { hartServerUrl, HartMuxDto, HartGw, HartGwDto, HartDeviceDto } from '../../types'
 
 @Component({
     components: {
@@ -26,10 +26,14 @@ import { hartServerUrl, HartMuxDto, HartGw, HartGwDto } from '../../types'
 export default class LiveHartMuxGraphic extends Vue {
     @Prop() gwIp: string
     public gw: HartGw = {ip: "", modules: [], serialNo: 0}
+    public deviceData: HartDeviceDto[] = []
     private ioCardSizes: number[] = []
+    private polling: number = 0
 
     mounted () {
         this.gwLookup()
+        this.updateDeviceData()
+        this.polling = setInterval(this.updateDeviceData, 2000)
     }
 
     scanIoCards () {
@@ -46,6 +50,13 @@ export default class LiveHartMuxGraphic extends Vue {
         this.$http.get(hartServerUrl + '/gw/discover').then(res => {
             const gws = res.data as HartGwDto
             this.gw = gws.gateways.find(gw => gw.ip == this.gwIp) || this.gw
+        })
+    }
+
+    updateDeviceData () {
+        this.$http.get(hartServerUrl + '/gw/' + this.gw.serialNo + '/info').then(res => {
+            const data = res.data as HartMuxDto
+            this.deviceData = data.devices
         })
     }
 }

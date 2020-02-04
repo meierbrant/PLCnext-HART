@@ -357,7 +357,7 @@ json HartMux::to_json() {
     json data = HartDevice::to_json();
 
     data["ipAddress"] = ipAddress;
-    data["devices"] = {};
+    data["devices"] = json::array();
     // zeroth device is itself
     int n = ioCapabilities.numConnectedDevices - 1;
     for (int i=0; i<n; i++) {

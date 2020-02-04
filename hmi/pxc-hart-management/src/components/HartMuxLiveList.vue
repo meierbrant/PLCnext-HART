@@ -58,7 +58,6 @@ export default class HartMuxLiveList extends Vue {
         this.$http.get(hartServerUrl + '/gw/' + this.gw.serialNo + '/info').then((res) => {
             const data = res.data as HartMuxDto
             let list: HartDeviceDto[] = []
-            let id = 1
             data.devices.forEach(device => {
                 list.push(device)
             })
