@@ -32,7 +32,7 @@ export default class DeviceBubble extends Vue {
     //     return this.deviceData !== undefined ? this.deviceData().longTag : 'device tag'
     // }
 
-    routeToShowDevices() {
+    routeToShowDevice() {
 
     }
 }

@@ -15,7 +15,7 @@ import { HartDeviceDto, hartServerUrl, HartMuxDto, HartGwDto, HartGw } from '../
 @Component({})
 export default class HartGateways extends Vue {
     public gateways: HartGw[] = []
-    private polling: number
+    private polling: number = 0
 
     mounted () {
         this.updateGateways()
@@ -29,7 +29,6 @@ export default class HartGateways extends Vue {
     public updateGateways () {
         this.$http.get(hartServerUrl + '/gw/discover').then(res => {
             this.gateways = (res.data as HartGwDto).gateways
-            console.log(res.data)
         })
     }
 }

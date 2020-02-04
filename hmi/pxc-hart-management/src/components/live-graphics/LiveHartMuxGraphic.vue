@@ -8,23 +8,19 @@
             </div>
         </div>
 
-        <HartMuxIo4 :gw=gw ioCard=0 />
-        <!-- <HartMuxIo8 :gw=gw ioCard=1 /> -->
-        <!-- <HartMuxIo4 ioCard=2 /> -->
+        <HartMuxIoCard v-for="(mod, i) in gw.modules" v-bind:key="i" :gw="gw" :ioCard="i" :modType="mod" />
     </div>
 </div>
 </template>
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
-import HartMuxIo4 from '@/components/live-graphics/HartMuxIo4.vue'
-import HartMuxIo8 from '@/components/live-graphics/HartMuxIo8.vue'
+import HartMuxIoCard from '@/components/live-graphics/HartMuxIoCard.vue'
 import { hartServerUrl, HartMuxDto, HartGw, HartGwDto } from '../../types'
 
 @Component({
     components: {
-        HartMuxIo4,
-        HartMuxIo8
+        HartMuxIoCard
     }
 })
 export default class LiveHartMuxGraphic extends Vue {
@@ -49,7 +45,7 @@ export default class LiveHartMuxGraphic extends Vue {
     gwLookup () {
         this.$http.get(hartServerUrl + '/gw/discover').then(res => {
             const gws = res.data as HartGwDto
-            this.gw = gws.gateways.find(gw => gw.ip === this.gwIp)
+            this.gw = gws.gateways.find(gw => gw.ip == this.gwIp) || this.gw
         })
     }
 }

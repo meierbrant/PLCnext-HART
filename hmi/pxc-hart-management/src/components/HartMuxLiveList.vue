@@ -42,7 +42,7 @@ export default class HartMuxLiveList extends Vue {
     @Prop() gwIp: string
     public gw: HartGw = {ip: "", modules: [], serialNo: 0}
     public devices: HartDeviceDto[] = []
-    private polling: number
+    private polling: number = 0
 
     mounted() {
         this.gwLookup()
@@ -69,7 +69,7 @@ export default class HartMuxLiveList extends Vue {
     gwLookup () {
         this.$http.get(hartServerUrl + '/gw/discover').then(res => {
             const gws = res.data as HartGwDto
-            this.gw = gws.gateways.find(gw => gw.ip === this.gwIp)
+            this.gw = gws.gateways.find(gw => gw.ip === this.gwIp) || this.gw
         })
     }
 }
