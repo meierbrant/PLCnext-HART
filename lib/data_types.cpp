@@ -146,3 +146,28 @@ hart_ip_hdr_t deserializeHartIpHdr(uint8_t *bytes) {
     // 8 bytes total
     return header;
 }
+
+json to_json(hart_var_set vars) {
+    json data = {
+        {"vars", {
+            {"loopCurrent", vars.loopCurrent},
+            {"pv", {
+                {"units", vars.pv.units},
+                {"value", vars.pv.value}
+            }},
+            {"sv", {
+                {"units", vars.sv.units},
+                {"value", vars.sv.value}
+            }},
+            {"tv", {
+                {"units", vars.tv.units},
+                {"value", vars.tv.value}
+            }},
+            {"qv", {
+                {"units", vars.qv.units},
+                {"value", vars.qv.value}
+            }}
+        }}
+    };
+    return data;
+}
