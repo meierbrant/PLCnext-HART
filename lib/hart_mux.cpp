@@ -70,11 +70,22 @@ uint8_t* HartMux::getUniqueAddr() { // cmd 0 by short address for gateway
 
     sendCmd(0, (uint8_t)0);
     // PDU frame up to data bytes should be 6 bytes
+    
     uint16_t deviceTypeCode = (response.body[7] << 8) | response.body[8];
     setTypeInfo(deviceTypeCode);
+
+    // FIXME: to resolve the weird issue that setTypeCode wipes out the response.body,
+    // temporarily send cmd 0 again to regain that info.
+    sendCmd(0, (uint8_t)0);
+
     addrUniq[0] = response.body[7];
     addrUniq[1] = response.body[8];
     memcpy(&addrUniq[2], &response.body[15], 3);
+
+    #ifdef DEBUG
+    cout << "addrUniq = ";
+    printBytes(addrUniq, 5);
+    #endif
 
     return (uint8_t *)addrUniq;
 }
@@ -101,9 +112,15 @@ HartDevice HartMux::readSubDeviceSummary(uint16_t index) {
     uint8_t data[2];
     serialize(index, data);
     sendCmd(84, addrUniq, data, 2);
-
-    HartDevice d;
+    
     size_t pduHdrSize = 10;
+    uint16_t deviceTypeCode = (response.body[pduHdrSize+6] << 8) | response.body[pduHdrSize+7];
+    HartDevice d(deviceTypeCode);
+
+    // FIXME: to resolve the weird issue that setTypeCode wipes out the response.body,
+    // temporarily send cmd 84 again to regain that info.
+    sendCmd(84, addrUniq, data, 2);
+
     memcpy(d.addrUniq, &response.body[pduHdrSize+6], 5);
     d.ioCard = response.body[pduHdrSize+2];
     d.channel = response.body[pduHdrSize+3];

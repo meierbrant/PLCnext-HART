@@ -145,3 +145,5 @@ void printBytes(T obj) {
 }
 
 json to_json(hart_var_set vars);
+
+string to_hex_string(uint16_t data);

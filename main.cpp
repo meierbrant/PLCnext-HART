@@ -82,6 +82,7 @@ int main(int argc, char *argv[]) {
             gwData = gws["gateways"][i];
             if (gwData["serialNo"] == serialNo) break;
         }
+        
         HartMux hart_mux(gwData["ip"]);
         hart_mux.initSession();
         hart_mux.autodiscoverSubDevices();

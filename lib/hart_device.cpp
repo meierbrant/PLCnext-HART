@@ -1,24 +1,57 @@
+#include <iostream>
 #include "hart_device.hpp"
 #include "data_types.hpp"
 #include "nlohmann/json.hpp"
+#include "csv-parser/parser.hpp"
 
+using std::ifstream;
 using std::cout;
 using std::endl;
+using std::string;
+using aria::csv::CsvParser;
+
+#define HART_DEVICE_INFO_CSV_FILE "lib/hart-csv/HART-expanded-device-type-codes.csv"
 
 HartDevice::HartDevice() {}
 
 HartDevice::HartDevice(uint16_t deviceTypeCode) {
-    typeCode = deviceTypeCode;
-    setTypeInfo(typeCode);
+    setTypeInfo(deviceTypeCode);
 }
 
-void HartDevice::setTypeInfo(uint16_t code) {
-    if (code == 0xb013) {
-        // name = "GW PL ETH/UNI-BUS";
-        // company = "Phoenix Contact";
-    } else {
-        name = "unknown";
-        company = "unknown";
+void HartDevice::setTypeInfo(uint16_t deviceTypeCode) {
+    ifstream f(HART_DEVICE_INFO_CSV_FILE);
+    CsvParser parser(f);
+    uint16_t code;
+    string code_string;
+    string description, company_name;
+    int col = 0;
+    bool lookup_success = false;
+
+    for (auto& row : parser) {
+        for (auto& field : row) {
+            switch (col) {
+                case 0:
+                    code_string = string(field);
+                    code = (uint16_t)std::stoi(code_string, nullptr, 16);
+                    break;
+                case 1:
+                    description = string(field);
+                    break;
+                case 2:
+                    company_name = string(field);
+            }
+            col = (col + 1) % 3;
+        }
+        if (deviceTypeCode == code) {
+            lookup_success = true;
+            break;
+        }
+    }
+    typeCode = deviceTypeCode;
+
+    if (lookup_success) {
+        name = description;
+        company = company_name;
     }
 }
 

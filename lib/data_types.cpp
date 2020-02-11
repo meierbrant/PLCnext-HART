@@ -171,3 +171,22 @@ json to_json(hart_var_set vars) {
     };
     return data;
 }
+
+string to_hex_string(uint16_t data) {
+    const char hex[] = "0123456789ABCDEF";
+    char str[5];
+    #ifdef REVERSE
+    str[0] = hex[data >> 12];
+    str[1] = hex[(data >> 8) & 0xf];
+    str[2] = hex[(data >> 4) & 0xf];
+    str[3] = hex[data & 0xf];
+    #else
+    str[0] = hex[data & 0xf];
+    str[1] = hex[(data >> 4) & 0xf];
+    str[2] = hex[(data >> 8) & 0xf];
+    str[3] = hex[data >> 12];
+    #endif
+    str[4] = '\0';
+
+    return string(str);
+}
