@@ -3,10 +3,23 @@
 The goal of this C++ library is to allow the PLCnext to connect with HART devices through the Phoenix Contact HART MUX.
 
 ## Installation
-compile with `g++ -pthread -o hart_mux_server main.cpp lib/*.cpp`
+Compile with:
+```
+g++ -pthread -o hart_mux_server main.cpp lib/*.cpp
+```
 
 ## Usage
-Running `./hart_mux_server` will start an HTTP server at `localhost:5900`.
+To start the HTTP server for the HART Gateway API at `localhost:5900`:
+```
+./hart_mux_server
+```
+
+To start the UI webserver at `localhost:8080`:
+```
+cd hmi/pxc-hart-management
+npm run serve
+```
+
 
 ## Issues
 * `lib/hart_device.cpp`:`setTypeInfo(uint16_t deviceTypeCode)`
