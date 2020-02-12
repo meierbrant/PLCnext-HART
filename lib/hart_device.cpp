@@ -11,6 +11,7 @@ using std::string;
 using aria::csv::CsvParser;
 
 #define HART_DEVICE_INFO_CSV_FILE "lib/hart-csv/HART-expanded-device-type-codes.csv"
+#define HART_UNIT_CODE_CSV_FILE "lib/hart-csv/HART-unit-codes.csv"
 
 HartDevice::HartDevice() {}
 
@@ -98,12 +99,34 @@ hart_var_set deserializeHartVarSet(uint8_t *bytes, size_t bCnt) {
     return vars;
 }
 
-string getUnitsFromCode(uint8_t code) {
-    string units;
-    if (code == 32) {
-        units = "°C";
-    } else {
-        units = "unknown units";
+string getUnitsFromCode(uint8_t unit_code) {
+    ifstream f(HART_UNIT_CODE_CSV_FILE);
+    CsvParser parser(f);
+    uint8_t code;
+    string units = "";
+    string code_string;
+    int col = 0,
+        r = 0;
+    bool lookup_success = false;
+
+    for (auto& row : parser) {
+        if (r++ != 0) {
+            for (auto& field : row) {
+                switch (col) {
+                    case 0:
+                        code_string = string(field);
+                        code = (uint8_t)std::stoi(code_string, nullptr, 10);
+                        break;
+                    case 1:
+                        units = string(field);
+                }
+                col = (col + 1) % 2;
+            }
+            if (unit_code == code) {
+                lookup_success = true;
+                break;
+            }
+        }
     }
     return units;
 }

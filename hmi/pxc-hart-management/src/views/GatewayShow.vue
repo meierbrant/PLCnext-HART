@@ -1,8 +1,8 @@
 <template>
   <div class="container">
     <HartDevice longTag="Dummy Device" hartRev="7"/>
-    <LiveHartMuxGraphic :gwIp=$route.params.ip />
-    <HartMuxLiveList :gwIp=$route.params.ip />
+    <LiveHartMuxGraphic :gwSN=$route.params.serialNo />
+    <HartMuxLiveList :gwSN=$route.params.serialNo />
   </div>
 </template>
 

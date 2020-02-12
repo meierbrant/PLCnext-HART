@@ -68,8 +68,10 @@ int main(int argc, char *argv[]) {
         res.set_content("This is the beginnings of a HART MUX web API!\n\n\
         Routes:\n\
         GET\t/\t\t\t\t\twelcome page\n\
-        GET\t/gw/{serialNo}/info\t\t\tHART MUX info\n\
+        GET\t/gw/{serialNo}/info\t\t\tHART MUX info (including connected devices)\n\
         GET\t/gw/discover\t\t\t\tdiscover all gateways on the network\n\
+        GET\t/gw/{serialNo}/vars\t\t\tget list of all devices w/ their vars\n\
+        GET\t/gw/{serialNo}/vars/{ioCard}\t\tget list of all devices on this io card w/ their vars\n\
         GET\t/gw/{serialNo}/vars/{card}/{ch}\t\tread vars from device\n", "text/plain");
     });
 
@@ -95,6 +97,82 @@ int main(int argc, char *argv[]) {
         json gwData = discoverGWs();
         res.set_header("Access-Control-Allow-Origin", "*");
         res.set_content(gwData.dump(), "text/json");
+    });
+
+    // GET /gw/{serialNo}/vars
+    s.Get(R"(/gw/(\d+)/vars)", [](const Request& req, Response& res) {
+        string serialNo(req.matches[1]);
+
+        json gws = discoverGWs();
+        json gwData;
+        for (int i=0; i<gws["gateways"].size(); i++) {
+            gwData = gws["gateways"][i];
+            if (gwData["serialNo"] == serialNo) break;
+        }
+        HartMux hart_mux(gwData["ip"]);
+        hart_mux.initSession();
+        hart_mux.autodiscoverSubDevices();
+
+        json data = json::object();
+        data["devices"] = json::array();
+        for (int i=0; i<hart_mux.ioCapabilities.numConnectedDevices; i++) {
+            HartDevice dev = hart_mux.devices[i];
+            cout << i+1 << "/" << hart_mux.ioCapabilities.numConnectedDevices << ": name=" << dev.name << "\taddr="; printBytes(dev.addrUniq, 5);
+            long addr = 0;
+            for (int i=0; i<sizeof(dev.addrUniq); i++) {
+                addr += dev.addrUniq[i];
+            }
+            if (addr == 0) { // ISSUE: this workaround prevents hanging when the device address is null
+                continue;
+            }
+            json vars = to_json(hart_mux.readSubDeviceVars(dev));
+            data["devices"][i] = dev.to_json();
+            data["devices"][i]["vars"] = vars;
+        }
+
+        hart_mux.closeSession();
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_content(data.dump(), "text/json");
+    });
+
+    // GET /gw/{serialNo}/vars/{ioCard}
+    s.Get(R"(/gw/(\d+)/vars/(\d+))", [](const Request& req, Response& res) {
+        string serialNo(req.matches[1]);
+        string ioCard(req.matches[2]);
+
+        json gws = discoverGWs();
+        json gwData;
+        for (int i=0; i<gws["gateways"].size(); i++) {
+            gwData = gws["gateways"][i];
+            if (gwData["serialNo"] == serialNo) break;
+        }
+        HartMux hart_mux(gwData["ip"]);
+        hart_mux.initSession();
+        hart_mux.autodiscoverSubDevices();
+
+        json data = json::object();
+        data["devices"] = json::array();
+        int count = 0;
+        for (int i=0; i<hart_mux.ioCapabilities.numConnectedDevices; i++) {
+            HartDevice dev = hart_mux.devices[i];
+            // cout << i+1 << "/" << hart_mux.ioCapabilities.numConnectedDevices << ": name=" << dev.name << "\taddr="; printBytes(dev.addrUniq, 5);
+            long addr = 0;
+            for (int i=0; i<sizeof(dev.addrUniq); i++) {
+                addr += dev.addrUniq[i];
+            }
+            if (addr == 0) { // ISSUE: this workaround prevents hanging when the device address is null
+                continue;
+            }
+            if (dev.ioCard == (uint8_t)stoi(ioCard)) {
+                json vars = to_json(hart_mux.readSubDeviceVars(dev));
+                data["devices"][count] = dev.to_json();
+                data["devices"][count++]["vars"] = vars;
+            }
+        }
+
+        hart_mux.closeSession();
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_content(data.dump(), "text/json");
     });
 
     // GET /gw/{serialNo}/vars/{ioCard}/{channel}

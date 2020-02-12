@@ -168,7 +168,10 @@ void HartMux::listDevices() {
 
 
 hart_var_set HartMux::readSubDeviceVars(HartDevice dev) {
+    #ifdef DEBUG
     cout << "readSubDeviceVars()" << endl;
+    #endif
+
     hart_pdu_frame innerFrame = buildPduFrame(dev.addrUniq, 3);
     innerFrame.addr[0] = innerFrame.addr[0] & 0x3f | 0x80; // long poll address
     uint8_t innerData[255];
@@ -178,7 +181,7 @@ hart_var_set HartMux::readSubDeviceVars(HartDevice dev) {
     innerData[bCnt++] = 5; // transmit preamble countserialize(innerFrame, innerData);
     bCnt += serialize(innerFrame, &innerData[bCnt]);
     hart_pdu_frame outerFrame = buildPduFrame(addrUniq, 77, innerData, bCnt);
-    
+
     sendPduFrame(outerFrame);
     hart_pdu_frame f = recvPduFrame();
     while (f.byteCnt == 2) { // got a bad response
