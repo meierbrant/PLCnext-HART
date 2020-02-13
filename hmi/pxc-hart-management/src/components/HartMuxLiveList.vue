@@ -14,7 +14,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="dev in devices" v-bind:key="10*dev.ioCard + dev.channel">
+                <tr class="clickable" v-for="dev in devices" v-bind:key="10*dev.ioCard + dev.channel" v-on:click="navigateToDeviceShow(dev)">
                     <td>{{ dev.longTag }}</td>
                     <td>{{ dev.name }}</td>
                     <td>{{ dev.company }}</td>
@@ -120,6 +120,14 @@ export default class HartMuxLiveList extends Vue {
 
     public displayVar(dev: HartDeviceDto, variable: string): string {
         return (dev.vars && dev.vars[variable] && dev.vars[variable].value) ? (dev.vars[variable].value.toFixed(2) + " " + dev.vars[variable].units) : ''
+    }
+
+    public navigateToDeviceShow(dev: HartDeviceDto) {
+        this.$router.push({ path: this.deviceUrl(dev) })
+    }
+
+    private deviceUrl(dev: HartDeviceDto): string {
+        return '/gateways/' + this.gwSN + '/device/' + dev.ioCard + '/' + dev.channel
     }
 }
 </script>

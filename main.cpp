@@ -68,11 +68,18 @@ int main(int argc, char *argv[]) {
         res.set_content("This is the beginnings of a HART MUX web API!\n\n\
         Routes:\n\
         GET\t/\t\t\t\t\twelcome page\n\
-        GET\t/gw/{serialNo}/info\t\t\tHART MUX info (including connected devices)\n\
         GET\t/gw/discover\t\t\t\tdiscover all gateways on the network\n\
+        GET\t/gw/{serialNo}/info\t\t\tHART MUX info (including connected devices)\n\
+        GET\t/gw/{serialNo}/info/{card}/{ch}\t\tread device info\n\
         GET\t/gw/{serialNo}/vars\t\t\tget list of all devices w/ their vars\n\
         GET\t/gw/{serialNo}/vars/{ioCard}\t\tget list of all devices on this io card w/ their vars\n\
         GET\t/gw/{serialNo}/vars/{card}/{ch}\t\tread vars from device\n", "text/plain");
+    });
+
+    s.Get("/gw/discover", [](const Request& req, Response& res) {
+        json gwData = discoverGWs();
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_content(gwData.dump(), "text/json");
     });
 
     // GET /gw/{serialNo}/info
@@ -93,10 +100,30 @@ int main(int argc, char *argv[]) {
         res.set_content(hart_mux.to_json().dump(), "text/json");
     });
 
-    s.Get("/gw/discover", [](const Request& req, Response& res) {
-        json gwData = discoverGWs();
+    // GET /gw/{serialNo}/info/{ioCard}/{channel}
+    s.Get(R"(/gw/(\d+)/info/(\d+)/(\d+))", [](const Request& req, Response& res) {
+        string serialNo(req.matches[1]);
+        string ioCard(req.matches[2]);
+        string channel(req.matches[3]);
+
+        json gws = discoverGWs();
+        json gwData;
+        for (int i=0; i<gws["gateways"].size(); i++) {
+            gwData = gws["gateways"][i];
+            if (gwData["serialNo"] == serialNo) break;
+        }
+        HartMux hart_mux(gwData["ip"]);
+        hart_mux.initSession();
+        hart_mux.autodiscoverSubDevices();
+        HartDevice dev;
+        for (int i=0; i<hart_mux.ioCapabilities.numConnectedDevices; i++) {
+            dev = hart_mux.devices[i];
+            if (dev.ioCard == (uint8_t)stoi(ioCard) && dev.channel == (uint8_t)stoi(channel)) break;
+        }
+
+        hart_mux.closeSession();
         res.set_header("Access-Control-Allow-Origin", "*");
-        res.set_content(gwData.dump(), "text/json");
+        res.set_content(dev.to_json().dump(), "text/json");
     });
 
     // GET /gw/{serialNo}/vars

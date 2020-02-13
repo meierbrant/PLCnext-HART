@@ -70,3 +70,10 @@ $grey: #aec8d2;
         grid-column-start: span 2;
     }
 }
+
+tr.clickable {
+    &:hover {
+        cursor: pointer;
+        background-color: map_get($theme-colors, 'primary') !important;
+    }
+}

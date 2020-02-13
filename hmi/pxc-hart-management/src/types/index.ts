@@ -9,7 +9,17 @@ export interface HartDeviceDto {
     revision: number
     ioCard: number
     channel: number
-    vars: HartVars | undefined
+    vars?: HartVars
+}
+
+export const verboseHartDeviceAttrs = {
+    // name: "Name",
+    // company: "Company",
+    // longTag: "Long Tag",
+    cmdRevLvl: "HART Revision",
+    revision: "Device Revision",
+    ioCard: "I/O Card",
+    channel: "Channel"
 }
 
 export interface HartMuxDto extends HartDeviceDto {

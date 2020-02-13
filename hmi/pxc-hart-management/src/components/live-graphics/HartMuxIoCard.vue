@@ -5,22 +5,22 @@
         <img v-if="isIo8" src="@/assets/img/hart_mux_io8_facade.png" />
     </div>
 
-    <DeviceBubble v-if="isIo4 || isIo8" v-bind:deviceData="devices[0]"
+    <DeviceBubble v-if="isIo4 || isIo8" v-bind:device="devices[0]"
         style="grid-column-start: 1; grid-row-start: 1" />
-    <DeviceBubble v-if="isIo4 || isIo8" v-bind:deviceData="devices[1]"
+    <DeviceBubble v-if="isIo4 || isIo8" v-bind:device="devices[1]"
         style="grid-column-start: 1; grid-row-start: 2" />
-    <DeviceBubble v-if="isIo4 || isIo8" v-bind:deviceData="devices[2]"
+    <DeviceBubble v-if="isIo4 || isIo8" v-bind:device="devices[2]"
         style="grid-column-start: 1; grid-row-start: 4" />
-    <DeviceBubble v-if="isIo4 || isIo8" v-bind:deviceData="devices[3]"
+    <DeviceBubble v-if="isIo4 || isIo8" v-bind:device="devices[3]"
         style="grid-column-start: 1; grid-row-start: 5" />
     
-    <DeviceBubble v-if="isIo8" v-bind:deviceData="devices[4]"
+    <DeviceBubble v-if="isIo8" v-bind:device="devices[4]"
         style="grid-column-start: 2; grid-row-start: 1" />
-    <DeviceBubble v-if="isIo8" v-bind:deviceData="devices[5]"
+    <DeviceBubble v-if="isIo8" v-bind:device="devices[5]"
         style="grid-column-start: 2; grid-row-start: 2" />
-    <DeviceBubble v-if="isIo8" v-bind:deviceData="devices[6]"
+    <DeviceBubble v-if="isIo8" v-bind:device="devices[6]"
         style="grid-column-start: 2; grid-row-start: 4" />
-    <DeviceBubble v-if="isIo8" v-bind:deviceData="devices[7]"
+    <DeviceBubble v-if="isIo8" v-bind:device="devices[7]"
         style="grid-column-start: 2; grid-row-start: 5" />
 </div>
 </template>

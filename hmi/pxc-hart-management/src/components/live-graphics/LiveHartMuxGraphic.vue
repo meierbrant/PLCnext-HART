@@ -36,6 +36,10 @@ export default class LiveHartMuxGraphic extends Vue {
         this.polling = setInterval(this.updateDeviceData, 2000)
     }
 
+    beforeDestroy () {
+        clearInterval(this.polling)
+    }
+
     scanIoCards () {
         this.$http.get(hartServerUrl + '/' + this.gwSN + '/info').then(res => {
             const data = res.data as HartMuxDto
