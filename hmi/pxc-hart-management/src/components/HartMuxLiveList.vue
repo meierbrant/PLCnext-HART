@@ -24,7 +24,7 @@
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator';
-import { HartDeviceDto, HartMuxDto, hartServerUrl } from '../types'
+import { HartDeviceDto, HartMuxDto, hartServerUrl, HartGw, HartGwDto } from '../types'
 
 const dummyHartDevice = {
     name: "dummy device",
@@ -39,23 +39,36 @@ const dummyHartDevice = {
 
 @Component
 export default class HartMuxLiveList extends Vue {
+    @Prop() gwIp: string
+    public gw: HartGw = {ip: "", modules: [], serialNo: 0}
     public devices: HartDeviceDto[] = []
+    private polling: number = 0
 
     mounted() {
-        console.log("mounted")
+        this.gwLookup()
         this.refreshDevices()
-        setInterval(this.refreshDevices, 2000)
+        this.polling = setInterval(this.refreshDevices, 2000)
+    }
+
+    beforeDestroy () {
+        clearInterval(this.polling)
     }
 
     public refreshDevices() {
-        this.$http.get(hartServerUrl + '/info').then((res) => {
+        this.$http.get(hartServerUrl + '/gw/' + this.gw.serialNo + '/info').then((res) => {
             const data = res.data as HartMuxDto
             let list: HartDeviceDto[] = []
-            let id = 1
             data.devices.forEach(device => {
                 list.push(device)
             })
             this.devices = list
+        })
+    }
+
+    gwLookup () {
+        this.$http.get(hartServerUrl + '/gw/discover').then(res => {
+            const gws = res.data as HartGwDto
+            this.gw = gws.gateways.find(gw => gw.ip === this.gwIp) || this.gw
         })
     }
 }
