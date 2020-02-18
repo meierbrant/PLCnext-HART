@@ -77,3 +77,21 @@ tr.clickable {
         background-color: map_get($theme-colors, 'primary') !important;
     }
 }
+
+.var-card {
+    margin-bottom: 30px;
+
+    .card-title {
+        font-size: 1em;
+    }
+
+    .value {
+        text-align: center;
+        font-size: 2em;
+        font-weight: bold;
+    
+        .units {
+            font-size: 0.5em;
+        }
+    }
+}

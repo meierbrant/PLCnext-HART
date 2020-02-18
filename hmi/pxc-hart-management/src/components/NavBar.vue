@@ -10,9 +10,6 @@
             <li class="nav-item active">
                 <router-link to="/" class="nav-link">Gateways <span class="sr-only">(current)</span></router-link>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">Link</a>
-            </li>
         </ul>
     </div>
 </nav>

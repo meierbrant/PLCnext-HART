@@ -13,9 +13,9 @@ export interface HartDeviceDto {
 }
 
 export const verboseHartDeviceAttrs = {
-    // name: "Name",
-    // company: "Company",
-    // longTag: "Long Tag",
+    name: "Name",
+    company: "Company",
+    longTag: "Long Tag",
     cmdRevLvl: "HART Revision",
     revision: "Device Revision",
     ioCard: "I/O Card",
@@ -46,15 +46,15 @@ export interface HartVarsDto {
         units: string
         value: number
     }
-    sv: {
+    sv?: {
         units: string
         value: number
     }
-    tv: {
+    tv?: {
         units: string
         value: number
     }
-    qv: {
+    qv?: {
         units: string
         value: number
     }

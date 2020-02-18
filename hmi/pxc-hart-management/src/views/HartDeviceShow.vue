@@ -8,7 +8,7 @@
 // @ is an alias to /src
 import { Vue, Component, Prop } from 'vue-property-decorator'
 import HartDeviceComponent from '@/components/HartDeviceComponent.vue'
-import { HartDeviceDto, HartMuxDto, hartServerUrl } from '../types'
+import { HartDeviceDto, HartMuxDto, hartServerUrl, HartVarsDto, HartVars } from '../types'
 
 const blankDevice: HartDeviceDto = {
   name: "",
@@ -38,16 +38,28 @@ export default class HartDeviceShow extends Vue {
   }
 
   beforeDestroy () {
-      clearInterval(this.polling)
+    clearInterval(this.polling)
   }
 
   public updateDevice() {
-    this.$http.get(hartServerUrl + '/gw/' + this.$route.params.serialNo + '/info').then((res) => {
-        const data = res.data as HartMuxDto
-        data.devices.forEach(device => {
-            if (device.ioCard == parseInt(this.$route.params.ioCard, 10)
-                && device.channel == parseInt(this.$route.params.channel, 10)) this.device = device
+    let updatedDevice
+    this.$http.get(hartServerUrl + '/gw/' + this.$route.params.serialNo + '/info').then(res => {
+      const data = res.data as HartMuxDto
+      data.devices.forEach(device => {
+        if (device.ioCard == parseInt(this.$route.params.ioCard, 10)
+            && device.channel == parseInt(this.$route.params.channel, 10)) updatedDevice = device
+      })
+    }).then(() => {
+      this.$http.get(hartServerUrl + '/gw/' + this.$route.params.serialNo + '/vars/'
+          + updatedDevice.ioCard + '/' + updatedDevice.channel).then(res => {
+        const data = res.data as HartVarsDto
+        let vars: HartVars = data
+        Object.keys(vars).forEach(key => {
+          vars[key].lastUpdated = new Date()
         })
+        updatedDevice.vars = vars
+        this.device = updatedDevice
+      })
     })
   }
 }
