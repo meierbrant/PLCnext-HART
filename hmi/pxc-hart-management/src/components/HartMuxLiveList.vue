@@ -151,6 +151,7 @@ export default class HartMuxLiveList extends Vue {
     }
 
     public navigateToDeviceShow(dev: HartDeviceDto) {
+        localStorage.device = JSON.stringify(dev)
         this.$router.push({ path: this.deviceUrl(dev) })
     }
 

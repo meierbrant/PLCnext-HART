@@ -35,6 +35,18 @@ export default class HartDeviceShow extends Vue {
   mounted() {
     this.updateDevice()
     this.polling = setInterval(this.updateDevice, 2000)
+    
+    // pull device from cache if present
+    if (localStorage.device) {
+        const device = JSON.parse(localStorage.device) as HartDeviceDto
+        if (device.ioCard == parseInt(this.$route.params.ioCard, 10)
+              && device.channel == parseInt(this.$route.params.channel, 10)) {
+            Object.keys(device.vars).forEach(key => {
+                device.vars[key].lastUpdated = new Date(device.vars[key].lastUpdated) // convert the date string back to a Date()
+            })
+            this.device = device
+        }
+    }
   }
 
   beforeDestroy () {
