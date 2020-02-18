@@ -1,24 +1,58 @@
+#include <iostream>
 #include "hart_device.hpp"
 #include "data_types.hpp"
 #include "nlohmann/json.hpp"
+#include "csv-parser/parser.hpp"
 
+using std::ifstream;
 using std::cout;
 using std::endl;
+using std::string;
+using aria::csv::CsvParser;
+
+#define HART_DEVICE_INFO_CSV_FILE "lib/hart-csv/HART-expanded-device-type-codes.csv"
+#define HART_UNIT_CODE_CSV_FILE "lib/hart-csv/HART-unit-codes.csv"
 
 HartDevice::HartDevice() {}
 
 HartDevice::HartDevice(uint16_t deviceTypeCode) {
-    typeCode = deviceTypeCode;
-    setTypeInfo(typeCode);
+    setTypeInfo(deviceTypeCode);
 }
 
-void HartDevice::setTypeInfo(uint16_t code) {
-    if (code == 0xb013) {
-        // name = "GW PL ETH/UNI-BUS";
-        // company = "Phoenix Contact";
-    } else {
-        name = "unknown";
-        company = "unknown";
+void HartDevice::setTypeInfo(uint16_t deviceTypeCode) {
+    ifstream f(HART_DEVICE_INFO_CSV_FILE);
+    CsvParser parser(f);
+    uint16_t code;
+    string code_string;
+    string description, company_name;
+    int col = 0;
+    bool lookup_success = false;
+
+    for (auto& row : parser) {
+        for (auto& field : row) {
+            switch (col) {
+                case 0:
+                    code_string = string(field);
+                    code = (uint16_t)std::stoi(code_string, nullptr, 16);
+                    break;
+                case 1:
+                    description = string(field);
+                    break;
+                case 2:
+                    company_name = string(field);
+            }
+            col = (col + 1) % 3;
+        }
+        if (deviceTypeCode == code) {
+            lookup_success = true;
+            break;
+        }
+    }
+    typeCode = deviceTypeCode;
+
+    if (lookup_success) {
+        name = description;
+        company = company_name;
     }
 }
 
@@ -65,12 +99,34 @@ hart_var_set deserializeHartVarSet(uint8_t *bytes, size_t bCnt) {
     return vars;
 }
 
-string getUnitsFromCode(uint8_t code) {
-    string units;
-    if (code == 32) {
-        units = "°C";
-    } else {
-        units = "unknown units";
+string getUnitsFromCode(uint8_t unit_code) {
+    ifstream f(HART_UNIT_CODE_CSV_FILE);
+    CsvParser parser(f);
+    uint8_t code;
+    string units = "";
+    string code_string;
+    int col = 0,
+        r = 0;
+    bool lookup_success = false;
+
+    for (auto& row : parser) {
+        if (r++ != 0) {
+            for (auto& field : row) {
+                switch (col) {
+                    case 0:
+                        code_string = string(field);
+                        code = (uint8_t)std::stoi(code_string, nullptr, 10);
+                        break;
+                    case 1:
+                        units = string(field);
+                }
+                col = (col + 1) % 2;
+            }
+            if (unit_code == code) {
+                lookup_success = true;
+                break;
+            }
+        }
     }
     return units;
 }

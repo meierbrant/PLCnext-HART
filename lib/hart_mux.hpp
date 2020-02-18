@@ -23,7 +23,7 @@ class HartMux : public HartDevice {
     bool stopAutodiscovery;
     HartDevice devices[32];
 
-    HartMux(string ip) : sock(ip, "5094"), ipAddress(ip), inactivityTimeout(30000) {};
+    HartMux(string ip) : sock(ip, "5094"), ipAddress(ip), inactivityTimeout(5000) {};
     int initSession();
     int closeSession();
     uint8_t* getUniqueAddr(); // cmd 0

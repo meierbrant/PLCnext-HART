@@ -24,7 +24,7 @@ import { hartServerUrl, HartMuxDto, HartGw, HartGwDto, HartDeviceDto } from '../
     }
 })
 export default class LiveHartMuxGraphic extends Vue {
-    @Prop() gwIp: string
+    @Prop() gwSN: number
     public gw: HartGw = {ip: "", modules: [], serialNo: 0}
     public deviceData: HartDeviceDto[] = []
     private ioCardSizes: number[] = []
@@ -37,7 +37,7 @@ export default class LiveHartMuxGraphic extends Vue {
     }
 
     scanIoCards () {
-        this.$http.get(hartServerUrl + '/' + this.gw.serialNo + '/info').then(res => {
+        this.$http.get(hartServerUrl + '/' + this.gwSN + '/info').then(res => {
             const data = res.data as HartMuxDto
             const deviceData = data.devices
             deviceData.forEach(d => {
@@ -49,7 +49,7 @@ export default class LiveHartMuxGraphic extends Vue {
     gwLookup () {
         this.$http.get(hartServerUrl + '/gw/discover').then(res => {
             const gws = res.data as HartGwDto
-            this.gw = gws.gateways.find(gw => gw.ip == this.gwIp) || this.gw
+            this.gw = gws.gateways.find(gw => gw.serialNo == this.gwSN) || this.gw
         })
     }
 

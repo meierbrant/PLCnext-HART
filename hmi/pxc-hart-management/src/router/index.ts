@@ -2,6 +2,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
 import GatewayShow from '../views/GatewayShow.vue'
+import HartDeviceShow from '../views/HartDeviceShow.vue'
 
 
 Vue.use(VueRouter)
@@ -21,9 +22,14 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/About.vue')
   },
   {
-    path: '/gateways/:ip',
+    path: '/gateways/:serialNo',
     name: 'show-gateway',
     component: GatewayShow
+  },
+  {
+    path: '/gateways/:serialNo/device/:ioCard/:channel',
+    name: 'show-hart-device',
+    component: HartDeviceShow
   }
 ]
 

@@ -54,8 +54,10 @@ json discoverGWs() {
     // printBytes((uint8_t*)buf, n);
     if (n<0) return json::object();
     json ioArray = json::array();
+    string module;
     for (int i=0; i<5; i++) {
-        ioArray[i] = resolveIoCardType(buf[i]);
+        module = resolveIoCardType(buf[i]);
+        if (!module.empty()) ioArray[i] = module;
     }
     gwData["gateways"][0] = {
         {"ip", recvAddr},

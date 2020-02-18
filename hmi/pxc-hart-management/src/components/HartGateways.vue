@@ -1,6 +1,6 @@
 <template>
 <table class="table table-striped">
-    <router-link :to="'/gateways/' + gw.ip" v-for="gw in gateways" v-bind:key="gw.serialNo">
+    <router-link :to="'/gateways/' + gw.serialNo" v-for="gw in gateways" v-bind:key="gw.serialNo">
         <tr>
             {{ gw.ip }}
         </tr>
