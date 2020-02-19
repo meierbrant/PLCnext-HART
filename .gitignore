@@ -1,2 +1,4 @@
+hart_mux_server
+udp_gw_discover
 *.out
 .vscode

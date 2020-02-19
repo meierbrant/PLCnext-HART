@@ -1,0 +1,166 @@
+Unit Code,Symbol
+32,°C
+33,°F
+34,°R
+35,K
+1,inH2O
+2,inHg
+3,ftH2O
+4,mmH2O
+5,mmHg
+6,psi
+7,bar
+8,mbar
+9,g/cm²
+10,kg/cm²
+11,Pa
+12,kPa
+13,Torr
+14,at
+145,inH2O (60 °F)
+237,MPa
+238,inH2O (4 °C)
+239,mmH2O (4 °C)
+15,ft³/min
+16,gal/min
+17,l/min
+18,gal (UK)/min
+19,m³/h
+22,gal/s
+23,Mgal/d
+24,l/s
+25,Ml/d
+26,ft³/s
+27,ft³/d
+28,m³/s
+29,m³/d
+30,gal (UK)/h
+31,gal (UK)/d
+121,Nm3/s
+122,Nl/h
+123,SCF/min
+130,ft³/h
+131,m³/min
+132,bbl/s
+133,bbl/min
+134,bbl/h
+135,bbl/d
+136,gal/h
+137,gal (UK)/s
+138,l/h
+235,gal/d
+20,ft/s
+21,m/s 
+114,in/s
+115,in/min
+116,ft/min
+120,m/h
+40,gal
+41,l
+42,gal (UK)
+43,m³
+46,bbl
+110,bu
+111,yd³
+112,ft³
+113,in³
+124,bbl (US)
+166,Nm³
+167,Nl
+168,SCF
+236,hl
+44,ft
+45,m
+47,in
+48,cm
+49,mm
+151,ft-16
+50,min
+51,s
+52,h
+53,d
+60,g
+61,kg
+62,t
+63,lb
+64,ton
+65,long ton
+125,oz
+70,g/s
+71,g/min
+72,g/h
+73,kg/s
+74,kg/m
+75,kg/h
+76,kg/d
+77,t/min
+78,t/h
+79,t/d
+80,lb/s
+81,lb/min
+82,lb/h
+83,lb/d
+84,ton/min
+85,ton/h
+86,ton/d
+87,long ton (UK)/h
+88,ton (UK)/d
+90,SG
+91,g/cm³
+92,kg/m³
+93,lb/gal
+94,lb/ft³
+95,g/ml
+96,kg/l
+97,g/l
+98,lb/in³
+99,ton/yd³
+100,°Tw
+102,B°
+103,B° (light)
+104,Degrees API
+146,µg/l
+147,µg/m³
+54,cSt
+55,cP
+36,mV
+58,V
+39,mA
+37,Ω
+163,kΩ 
+69,J
+89,DTH
+126,lbf
+128,kWh
+162,Mcal(th)
+164,MJ
+165,Btu
+127,kW
+129,hp
+140,Mcal(th)/h
+141,MJ/h
+142,Btu/h
+117,°/s
+118,rps
+119,rpm
+38,Hz
+57,%
+59,pH
+101,°Bx
+105,%
+106,%
+107,°Bg
+108,proof/vol
+109,proof/mass
+139,ppm
+148,%
+149,vol%
+150,%
+152,ft³/lb
+153,pF
+154,ml/l
+155,µl/l
+156,dB
+160,°P 
+161,%LEL
+169,ppb

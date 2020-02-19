@@ -8,22 +8,24 @@
 #include <unistd.h>
 #include <iostream>
 
+using std::string;
 using std::cout;
 using std::endl;
 
 class Socket {
     private:
-    std::string target;
-    std::string ipstr;
-    std::string port;
+    string target;
+    string ipstr;
+    string port;
     struct addrinfo *servinfo;
     int sockfd;
 
     public:
-    Socket(std::string target);
-    Socket(std::string target, std::string port);
+    Socket() {};
+    Socket(string target);
+    Socket(string target, string port);
     int connect();
-    int bind();
+    int bind(string port);
     int send(const uint8_t *msg, size_t len, int flags);
     int recv(uint8_t *buf, size_t len, int flags);
     int close();

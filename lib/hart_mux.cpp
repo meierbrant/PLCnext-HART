@@ -2,9 +2,12 @@
 #include "hart_devices.hpp"
 
 #include "nettools.hpp"
+#include "nlohmann/json.hpp"
 #include <string.h>
 
 // #define DEBUG
+
+using nlohmann::json;
 
 // Constructor defined in header
 
@@ -67,11 +70,22 @@ uint8_t* HartMux::getUniqueAddr() { // cmd 0 by short address for gateway
 
     sendCmd(0, (uint8_t)0);
     // PDU frame up to data bytes should be 6 bytes
+    
     uint16_t deviceTypeCode = (response.body[7] << 8) | response.body[8];
     setTypeInfo(deviceTypeCode);
+
+    // FIXME: to resolve the weird issue that setTypeCode wipes out the response.body,
+    // temporarily send cmd 0 again to regain that info.
+    sendCmd(0, (uint8_t)0);
+
     addrUniq[0] = response.body[7];
     addrUniq[1] = response.body[8];
     memcpy(&addrUniq[2], &response.body[15], 3);
+
+    #ifdef DEBUG
+    cout << "addrUniq = ";
+    printBytes(addrUniq, 5);
+    #endif
 
     return (uint8_t *)addrUniq;
 }
@@ -93,14 +107,20 @@ void HartMux::readIOSystemCapabilities() { // cmd 74
 
 HartDevice HartMux::readSubDeviceSummary(uint16_t index) {
     #ifdef DEBUG
-    cout << "readSubDeviceSummary()" << endl;
+    cout << "readSubDeviceSummary() " << index << "/" << ioCapabilities.numConnectedDevices << " devices" << endl;
     #endif
     uint8_t data[2];
     serialize(index, data);
     sendCmd(84, addrUniq, data, 2);
-
-    HartDevice d;
+    
     size_t pduHdrSize = 10;
+    uint16_t deviceTypeCode = (response.body[pduHdrSize+6] << 8) | response.body[pduHdrSize+7];
+    HartDevice d(deviceTypeCode);
+
+    // FIXME: to resolve the weird issue that setTypeCode wipes out the response.body,
+    // temporarily send cmd 84 again to regain that info.
+    sendCmd(84, addrUniq, data, 2);
+
     memcpy(d.addrUniq, &response.body[pduHdrSize+6], 5);
     d.ioCard = response.body[pduHdrSize+2];
     d.channel = response.body[pduHdrSize+3];
@@ -148,7 +168,10 @@ void HartMux::listDevices() {
 
 
 hart_var_set HartMux::readSubDeviceVars(HartDevice dev) {
+    #ifdef DEBUG
     cout << "readSubDeviceVars()" << endl;
+    #endif
+
     hart_pdu_frame innerFrame = buildPduFrame(dev.addrUniq, 3);
     innerFrame.addr[0] = innerFrame.addr[0] & 0x3f | 0x80; // long poll address
     uint8_t innerData[255];
@@ -158,7 +181,7 @@ hart_var_set HartMux::readSubDeviceVars(HartDevice dev) {
     innerData[bCnt++] = 5; // transmit preamble countserialize(innerFrame, innerData);
     bCnt += serialize(innerFrame, &innerData[bCnt]);
     hart_pdu_frame outerFrame = buildPduFrame(addrUniq, 77, innerData, bCnt);
-    
+
     sendPduFrame(outerFrame);
     hart_pdu_frame f = recvPduFrame();
     while (f.byteCnt == 2) { // got a bad response
@@ -224,6 +247,15 @@ int HartMux::sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData, s
     memset(buf, 0, 512);
     
     return recvData(buf);
+}
+
+void HartMux::sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt) {
+    hart_pdu_frame f = buildPduFrame(uniqueAddr, cmd, reqData, reqDataCnt);
+
+    sendPduFrame(f);
+
+    memset(resData, 0, 512);
+    resDataCnt = recvData(resData);
 }
 
 int HartMux::send(uint8_t *bytes, size_t len, int flags) {
@@ -292,20 +324,25 @@ int HartMux::recvData(uint8_t *buf) {
             request.header.seqNo++;
         }        
     }
-    
-    // get rest of response from MUX
-    uint8_t bdy_buf[response.header.byteCount - sizeof(hart_ip_hdr_t)];
-    memset(buf, 0, sizeof(bdy_buf));
+
     int r = 0;
-    if (sizeof(bdy_buf) > 0) {
-        r = recv(buf, sizeof(bdy_buf), 0);
-        response.body = buf;
-        //*buf = bdy_buf;
-        #ifdef DEBUG
-        cout << "received data (network byte order):" << endl;
-        printBytes(response.body, sizeof(bdy_buf));
-        cout << endl;
-        #endif
+    // ignore obviously corrupt transmissions
+    if (response.header.byteCount < 65536) {
+        
+    
+        // get rest of response from MUX
+        uint8_t bdy_buf[response.header.byteCount - sizeof(hart_ip_hdr_t)];
+        memset(buf, 0, sizeof(bdy_buf));
+        if (sizeof(bdy_buf) > 0) {
+            r = recv(buf, sizeof(bdy_buf), 0);
+            response.body = buf;
+            //*buf = bdy_buf;
+            #ifdef DEBUG
+            cout << "received data (network byte order):" << endl;
+            printBytes(response.body, sizeof(bdy_buf));
+            cout << endl;
+            #endif
+        }
     }
 
     return r;
@@ -334,4 +371,18 @@ void autodiscoverLoop(HartMux *mux, int seconds) {
         mux->autodiscoverSubDevices();
         sleep(seconds);
     }
+}
+
+json HartMux::to_json() {
+    json data = HartDevice::to_json();
+
+    data["ipAddress"] = ipAddress;
+    data["devices"] = json::array();
+    // zeroth device is itself
+    int n = ioCapabilities.numConnectedDevices - 1;
+    for (int i=0; i<n; i++) {
+        data["devices"][i] = devices[i].to_json();
+    }
+
+    return data;
 }

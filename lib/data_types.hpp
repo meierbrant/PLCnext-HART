@@ -3,6 +3,8 @@
 #include <iostream>
 #include <iomanip>
 #include <cstring>
+#include "hart_device.hpp"
+#include "nlohmann/json.hpp"
 
 // uncomment if endianness of PLCnext does not match network byte order
 #define REVERSE
@@ -14,6 +16,7 @@ using std::dec;
 using std::setfill;
 using std::setw;
 using std::string;
+using nlohmann::json;
 
 struct hart_ip_hdr_t { // 8 bytes total
     uint8_t version;   //0
@@ -76,7 +79,6 @@ hart_ip_hdr_t deserializeHartIpHdr(uint8_t *bytes);
 
 size_t serialize(hart_pdu_frame f, uint8_t *bytes);
 hart_pdu_frame deserializeHartPduFrame(uint8_t *bytes);
-
 
 template <typename T>
 T fromBytes(uint8_t* bytes) {
@@ -142,3 +144,6 @@ void printBytes(T obj) {
     cout << dec << endl;
 }
 
+json to_json(hart_var_set vars);
+
+string to_hex_string(uint16_t data);
