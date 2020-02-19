@@ -63,21 +63,49 @@ const dummyHartDevice = {
     vars: dummyVars
 }
 
+interface LiveListCache {
+    gw: HartGw,
+    devices: HartDeviceDto[]
+}
+
 @Component
 export default class HartMuxLiveList extends Vue {
     @Prop() gwSN: number
     public gw: HartGw = {ip: "", modules: [], serialNo: 0}
     public devices: HartDeviceDto[] = []
     private polling: number = 0
-    private nextIoCardUpdate = 0
+    private nextIoCardUpdate
 
     mounted() {
-        this.gwLookup()
+        this.nextIoCardUpdate = 0
         this.polling = setInterval(this.refreshDevices, 2000)
+
+        // pull live list from cache if present
+        if (localStorage.liveList) {
+            const llc = JSON.parse(localStorage.liveList) as LiveListCache
+            if (llc.gw.serialNo === this.gwSN) {
+                this.gw = llc.gw
+                llc.devices.forEach(dev => {
+                    Object.keys(dev.vars).forEach(key => {
+                        dev.vars[key].lastUpdated = new Date(dev.vars[key].lastUpdated) // convert the date string back to a Date()
+                    })
+                })
+                this.devices = llc.devices
+            }
+        } else {
+            this.gwLookup()
+        }
     }
 
     beforeDestroy () {
         clearInterval(this.polling)
+
+        // cache live list
+        const llc: LiveListCache = {
+            gw: this.gw,
+            devices: this.devices
+        }
+        localStorage.liveList = JSON.stringify(llc)
     }
 
     public refreshDevices() {
@@ -123,6 +151,7 @@ export default class HartMuxLiveList extends Vue {
     }
 
     public navigateToDeviceShow(dev: HartDeviceDto) {
+        localStorage.device = JSON.stringify(dev)
         this.$router.push({ path: this.deviceUrl(dev) })
     }
 
