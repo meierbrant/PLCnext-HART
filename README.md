@@ -3,9 +3,39 @@
 The goal of this C++ library is to allow the PLCnext to connect with HART devices through the Phoenix Contact HART MUX.
 
 ## Installation
+### Test from Linux Dev Machine
 Compile with:
 ```
 g++ -pthread -o hart_mux_server main.cpp lib/*.cpp
+```
+
+### Cross-Compile from Linux Dev Machine
+<!-- Download the `PLCnext Technology C++ tool chain for Linux` from the [product page](https://www.phoenixcontact.com/online/portal/us/?uri=pxc-oc-itemdetail:pid=2404267).
+
+Run the toolchain install script. For example:
+```
+chmod +x pxc-glibc-x86_64-axcf2152-image-sdk-cortexa9t2hf-neon-axcf2152-toolchain-2020.0.sh
+```
+```
+./pxc-glibc-x86_64-axcf2152-image-sdk-cortexa9t2hf-neon-axcf2152-toolchain-2020.0.sh
+``` -->
+
+Install the `g++-arm-linux-gnueabihf` package to allow the host machine to cross-compile for arm:
+```
+sudo apt install g++-arm-linux-gnueabihf
+```
+To fix an issue with enums that occurs switching to arm, open `lib/csv-parser/parser.hpp` and change
+```c++
+enum class Term : char { CRLF = -2 };
+```
+to
+```c++
+enum class Term : char { CRLF = 13 };
+```
+
+Compile with:
+```
+arm-linux-gnueabihf-g++ -std=c++11 -Wno-psabi -pthread -o arm_server main.cpp lib/*.cpp
 ```
 
 ## Usage

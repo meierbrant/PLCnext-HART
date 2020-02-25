@@ -46,7 +46,8 @@
                         <div class="col-sm-6" v-for="(v, key) in vars" v-bind:key="key">
                             <b-card :title="key" class="var-card">
                                 <div class="value text-secondary">
-                                    {{ v.value.toFixed(2) }}<span class="units text-dark">{{ v.units }}</span>
+                                    <!-- FIXME: if there's no var, this shouldn't get run -->
+                                    {{ v.value ? v.value.toFixed(2) : '' }}<span class="units text-dark">{{ v.units ? v.units : '' }}</span>
                                 </div>
                             </b-card>
                         </div>

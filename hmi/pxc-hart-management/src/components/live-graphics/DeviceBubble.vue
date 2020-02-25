@@ -38,7 +38,7 @@ export default class DeviceBubble extends Vue {
     // }
 
     routeToShowDevice() {
-        console.log(this.device)
+        
     }
 }
 </script>
