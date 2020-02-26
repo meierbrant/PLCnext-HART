@@ -10,7 +10,7 @@
 
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator'
-import { HartDeviceDto, hartServerUrl, HartMuxDto, HartGwDto, HartGw } from '../types'
+import { hartServerUrl, HartMuxDto, HartGwDto, HartGw } from '../types'
 
 @Component({})
 export default class HartGateways extends Vue {

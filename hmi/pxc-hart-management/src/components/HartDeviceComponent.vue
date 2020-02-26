@@ -60,17 +60,18 @@
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
-import { HartDeviceDto, verboseHartDeviceAttrs, HartVars } from '../types'
+import { HartDeviceDto, verboseHartDeviceAttrs } from '../types/hart-device'
+import { HartVars } from '../types/hart-vars'
 
 @Component({
     components: {
     }
 })
 export default class HartDeviceComponent extends Vue {
-    @Prop() device: HartDeviceDto
+    @Prop() device!: HartDeviceDto
     public hartAttrs = verboseHartDeviceAttrs
 
-    get vars(): HartVars {
+    get vars(): HartVars | undefined {
         return this.device.vars
     }
 }

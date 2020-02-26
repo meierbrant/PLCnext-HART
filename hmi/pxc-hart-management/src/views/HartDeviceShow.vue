@@ -8,7 +8,9 @@
 // @ is an alias to /src
 import { Vue, Component, Prop } from 'vue-property-decorator'
 import HartDeviceComponent from '@/components/HartDeviceComponent.vue'
-import { HartDeviceDto, HartMuxDto, hartServerUrl, HartVarsDto, HartVars } from '../types'
+import { HartMuxDto, hartServerUrl } from '../types'
+import { HartDeviceDto } from '../types/hart-device'
+import { HartVarsDto, HartVars } from '../types/hart-vars'
 
 const blankDevice: HartDeviceDto = {
   name: "",
@@ -41,8 +43,9 @@ export default class HartDeviceShow extends Vue {
         const device = JSON.parse(localStorage.device) as HartDeviceDto
         if (device.ioCard == parseInt(this.$route.params.ioCard, 10)
               && device.channel == parseInt(this.$route.params.channel, 10)) {
-            Object.keys(device.vars).forEach(key => {
-                device.vars[key].lastUpdated = new Date(device.vars[key].lastUpdated) // convert the date string back to a Date()
+            Object.keys(device.vars!).forEach(key => {
+                // FIXME
+                (device.vars as any)[key]!.lastUpdated = new Date((device.vars as any)[key]!.lastUpdated) // convert the date string back to a Date()
             })
             this.device = device
         }
@@ -54,7 +57,7 @@ export default class HartDeviceShow extends Vue {
   }
 
   public updateDevice() {
-    let updatedDevice
+    let updatedDevice: HartDeviceDto
     this.$http.get(hartServerUrl + '/gw/' + this.$route.params.serialNo + '/info').then(res => {
       const data = res.data as HartMuxDto
       data.devices.forEach(device => {
@@ -62,16 +65,19 @@ export default class HartDeviceShow extends Vue {
             && device.channel == parseInt(this.$route.params.channel, 10)) updatedDevice = device
       })
     }).then(() => {
-      this.$http.get(hartServerUrl + '/gw/' + this.$route.params.serialNo + '/vars/'
-          + updatedDevice.ioCard + '/' + updatedDevice.channel).then(res => {
-        const data = res.data as HartVarsDto
-        let vars: HartVars = data
-        Object.keys(vars).forEach(key => {
-          vars[key].lastUpdated = new Date()
+      if (updatedDevice) {
+        this.$http.get(hartServerUrl + '/gw/' + this.$route.params.serialNo + '/vars/'
+            + updatedDevice.ioCard + '/' + updatedDevice.channel).then(res => {
+          const data = res.data as HartVarsDto
+          let vars: HartVars = data as HartVars
+          Object.keys(vars).forEach(key => {
+            // FIXME
+            (vars as any)[key]!.lastUpdated = new Date()
+          })
+          updatedDevice.vars = vars
+          this.device = updatedDevice
         })
-        updatedDevice.vars = vars
-        this.device = updatedDevice
-      })
+      }
     })
   }
 }

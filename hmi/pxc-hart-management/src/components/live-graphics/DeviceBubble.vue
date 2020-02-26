@@ -8,13 +8,13 @@
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
-import { HartDeviceDto } from '../../types'
+import { HartDeviceDto } from '../../types/hart-device'
 
 type status = 'online' | 'offline';
 
 @Component
 export default class DeviceBubble extends Vue {
-    @Prop() device: HartDeviceDto
+    @Prop() device!: HartDeviceDto
 
     mounted () {
         

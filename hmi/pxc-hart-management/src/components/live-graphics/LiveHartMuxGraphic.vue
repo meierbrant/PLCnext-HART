@@ -16,7 +16,8 @@
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
 import HartMuxIoCard from '@/components/live-graphics/HartMuxIoCard.vue'
-import { hartServerUrl, HartMuxDto, HartGw, HartGwDto, HartDeviceDto } from '../../types'
+import { hartServerUrl, HartMuxDto, HartGw, HartGwDto } from '../../types'
+import { HartDeviceDto } from '../../types/hart-device'
 
 @Component({
     components: {
@@ -24,7 +25,7 @@ import { hartServerUrl, HartMuxDto, HartGw, HartGwDto, HartDeviceDto } from '../
     }
 })
 export default class LiveHartMuxGraphic extends Vue {
-    @Prop() gwSN: number
+    @Prop() gwSN!: number
     public gw: HartGw = {ip: "", modules: [], serialNo: 0}
     public deviceData: HartDeviceDto[] = []
     private ioCardSizes: number[] = []

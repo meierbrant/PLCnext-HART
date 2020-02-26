@@ -30,8 +30,10 @@
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator';
-import { HartDeviceDto, HartMuxDto, hartServerUrl, HartGw, HartGwDto, HartVars, HartDeviceVarsListDto } from '../types'
+import { HartMuxDto, hartServerUrl, HartGw, HartGwDto } from '../types'
 import { HttpResponse } from 'vue-resource/types/vue_resource';
+import { HartVars, HartDeviceVarsListDto } from '../types/hart-vars';
+import { HartDeviceDto } from '../types/hart-device';
 
 const dummyVars: HartVars = {
     loopCurrent: {
@@ -68,13 +70,15 @@ interface LiveListCache {
     devices: HartDeviceDto[]
 }
 
+type hartVarKey = 'loopCurrent' | 'pv' | 'sv' | 'tv' | 'qv'
+
 @Component
 export default class HartMuxLiveList extends Vue {
-    @Prop() gwSN: number
+    @Prop() gwSN!: number
     public gw: HartGw = {ip: "", modules: [], serialNo: 0}
     public devices: HartDeviceDto[] = []
     private polling: number = 0
-    private nextIoCardUpdate
+    private nextIoCardUpdate: number = 0
 
     mounted() {
         this.nextIoCardUpdate = 0
@@ -86,8 +90,9 @@ export default class HartMuxLiveList extends Vue {
             if (llc.gw.serialNo === this.gwSN) {
                 this.gw = llc.gw
                 llc.devices.forEach(dev => {
-                    Object.keys(dev.vars).forEach(key => {
-                        dev.vars[key].lastUpdated = new Date(dev.vars[key].lastUpdated) // convert the date string back to a Date()
+                    if (dev.vars) Object.keys(dev.vars).forEach(key => {
+                        // FIXME
+                        (dev.vars as any)[key]!.lastUpdated = new Date((dev.vars as any)[key]!.lastUpdated) // convert the date string back to a Date()
                     })
                 })
                 this.devices = llc.devices
@@ -112,10 +117,10 @@ export default class HartMuxLiveList extends Vue {
         this.$http.get(hartServerUrl + '/gw/' + this.gwSN + '/vars/' + this.nextIoCardUpdate).then((res) => {
             const data = res.data as HartDeviceVarsListDto
             data.devices.forEach(updatedDevice => {
-                const thisDevice = (dev) => dev.ioCard == updatedDevice.ioCard && dev.channel == updatedDevice.channel
+                const thisDevice = (dev: HartDeviceDto) => dev.ioCard == updatedDevice.ioCard && dev.channel == updatedDevice.channel
                 const indexOD = this.devices.findIndex(thisDevice)
-                Object.keys(updatedDevice.vars).forEach(key => {
-                    updatedDevice.vars[key].lastUpdated = new Date()
+                Object.keys(updatedDevice.vars!).forEach(key => {
+                    (updatedDevice.vars! as any)[key].lastUpdated = new Date()
                 })
                 if (indexOD >= 0) {
                     const oldDevice = this.devices[indexOD]
@@ -146,8 +151,9 @@ export default class HartMuxLiveList extends Vue {
         })
     }
 
-    public displayVar(dev: HartDeviceDto, variable: string): string {
-        return (dev.vars && dev.vars[variable] && dev.vars[variable].value) ? (dev.vars[variable].value.toFixed(2) + " " + dev.vars[variable].units) : ''
+    public displayVar(dev: HartDeviceDto, variable: hartVarKey): string {
+        return (dev.vars && (dev.vars as any)[variable] && (dev.vars as any)[variable]!.value) ?
+            ((dev.vars as any)[variable]!.value.toFixed(2) + " " + (dev.vars as any)[variable]!.units) : ''
     }
 
     public navigateToDeviceShow(dev: HartDeviceDto) {

@@ -27,8 +27,9 @@
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
-import { HartDeviceDto, hartServerUrl, HartMuxDto, HartGw } from '../../types'
+import { hartServerUrl, HartMuxDto, HartGw } from '../../types'
 import DeviceBubble from './DeviceBubble.vue'
+import { HartDeviceDto } from '../../types/hart-device'
 
 @Component({
     components: {
@@ -36,10 +37,10 @@ import DeviceBubble from './DeviceBubble.vue'
     }
 })
 export default class HartMuxIoCard extends Vue {
-    @Prop() ioCard: number
-    @Prop() gw: HartGw
-    @Prop() modType: string
-    @Prop() deviceData: HartDeviceDto[]
+    @Prop() ioCard!: number
+    @Prop() gw!: HartGw
+    @Prop() modType!: string
+    @Prop() deviceData!: HartDeviceDto[]
 
     mounted () {
     }
