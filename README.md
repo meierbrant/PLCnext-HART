@@ -2,43 +2,13 @@
 
 The goal of this C++ library is to allow the PLCnext to connect with HART devices through the Phoenix Contact HART MUX.
 
-## Installation
-### Test from Linux Dev Machine
+## Test from Linux Dev Machine
+<!-- Make sure `libssl-dev` and `libssl-dev:1386` are installed. -->
 Compile with:
 ```
 g++ -pthread -o hart_mux_server main.cpp lib/*.cpp
 ```
 
-### Cross-Compile from Linux Dev Machine
-<!-- Download the `PLCnext Technology C++ tool chain for Linux` from the [product page](https://www.phoenixcontact.com/online/portal/us/?uri=pxc-oc-itemdetail:pid=2404267).
-
-Run the toolchain install script. For example:
-```
-chmod +x pxc-glibc-x86_64-axcf2152-image-sdk-cortexa9t2hf-neon-axcf2152-toolchain-2020.0.sh
-```
-```
-./pxc-glibc-x86_64-axcf2152-image-sdk-cortexa9t2hf-neon-axcf2152-toolchain-2020.0.sh
-``` -->
-
-Install the `g++-arm-linux-gnueabihf` package to allow the host machine to cross-compile for arm:
-```
-sudo apt install g++-arm-linux-gnueabihf
-```
-To fix an issue with enums that occurs switching to arm, open `lib/csv-parser/parser.hpp` and change
-```c++
-enum class Term : char { CRLF = -2 };
-```
-to
-```c++
-enum class Term : char { CRLF = 13 };
-```
-
-Compile with:
-```
-arm-linux-gnueabihf-g++ -std=c++11 -Wno-psabi -pthread -o arm_server main.cpp lib/*.cpp
-```
-
-## Usage
 To start the HTTP server for the HART Gateway API at `localhost:5900`:
 ```
 ./hart_mux_server
@@ -50,8 +20,83 @@ cd hmi/pxc-hart-management
 npm run serve
 ```
 
+## Deploy on PLCnext
+
+### Cross-Compile from Linux Dev Machine
+
+Install the `g++-arm-linux-gnueabihf` package to allow the host machine to cross-compile for arm:
+```
+sudo apt install g++-arm-linux-gnueabihf
+```
+To fix an issue with enums that occurs switching to arm, open `lib/csv-parser/parser.hpp` and change
+```c++
+enum class Term : char { CRLF = -2 };
+```
+to
+```c++
+enum class Term { CRLF = -2 };
+```
+
+Compile with:
+```
+arm-linux-gnueabihf-g++ -std=c++11 -Wno-psabi -pthread -o arm_hartip_server main.cpp lib/*.cpp
+```
+
+## Installing on PLCnext
+SSH into the PLCnext and set up the environment:
+```bash
+ssh admin@192.168.1.10
+mkdir -p /opt/plcnext/hartip
+```
+
+From the linux dev machine, cross-compile the C++ backend for ARM and copy the cross-compiled binary to the PLCnext:
+```
+scp arm_hartip_server admin@192.168.1.10:/opt/plcnext/hartip
+scp -r lib/hart-csv admin@192.168.1.10:/opt/plcnext/hartip
+```
+
+Build the web UI assets and copy them to the PLCnext:
+```
+cd hmi/pxc-hart-management
+npm run build
+scp -r dist admin@192.168.1.10:/opt/plcnext/hartip
+```
+You should now have both the `arm_hartip_server` binary and the `dist` directory with the web UI assets in `/opt/plcnext/hartip`.
+
+### Adding the Hart Management Web UI to the Nginx server
+SSH into the PLCnext and edit the nginx conf file, `/etc/nginx/nginx.conf`.
+
+Find the port 80 server section and mount the hartip `dist` folder at `/hartip`. Make sure to comment out the SSL redirect line. This is necessary because the hartip-server only supports HTTP, not HTTPS.
+```bash
+    server {
+        listen  80
+
+        location /hartip {
+            alias /opt/plcnext/hartip/dist;
+            index index.html;
+
+            add_header X-Frame-Options SAMEORIGIN;
+        }
+        #return 301 https://$host$request_uri;
+    }
+```
+Don't forget to restart nginx as root:
+```bash
+/etc/init.d/nginx restart
+```
+
+### Making the HART IP server run on startup
+As root, copy the `hartip-server` script in this repo to `/etc/init.d/` and change its permissions to `755`. Then add it to the default daemons for startup:
+```bash
+update-rc.d hartip-server defaults
+```
+
 
 ## Issues
+* `lib/udp_dateway_discovery.cpp`:`discoverGWs()`
+
+    IP broadcast address is hardcoded. The broadcast address of the PLCnext's network should be auto discovered.
+
 * `lib/hart_device.cpp`:`setTypeInfo(uint16_t deviceTypeCode)`
     
     For some reason, strings with more than 15 characters cause `addrUniq` and a lot of other class vars to get wiped out. The theoretical limit of the string data type should be practically infinite, so not sure where the memory leak is occurring.

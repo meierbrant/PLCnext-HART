@@ -69,13 +69,16 @@ export class HartDevice implements HartDeviceDto {
             const gwSN = ''
             const url = hartServerUrl + '/gw/' + gwSN + '/vars/' + this.ioCard + '/' + this.channel 
             await axios.get(url).then(res => {
-                const varsDto = res.data as HartVarsDto
+                // FIXME
+                const varsDto = res.data as HartVarsDto as any
+                const vars = this._vars as any
                 Object.keys(varsDto).forEach(key => {
                     // these keys are by definition allowed on HartVars objects, but TS won't infer that
-                    (this._vars as any)[key].value = (varsDto as any)[key].value
-                    (this._vars as any)[key].units = (varsDto as any)[key].units
-                    (this._vars as any)[key].lastUpdated = new Date()
+                    vars[key].value = varsDto[key].value
+                    vars[key].units = varsDto[key].units
+                    vars[key].lastUpdated = new Date()
                 })
+                this._vars = vars
             })
             return this._vars
         }

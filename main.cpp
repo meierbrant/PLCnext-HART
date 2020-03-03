@@ -11,47 +11,9 @@ using namespace std;
 
 // NOTE: this must be compiled with the -pthread flag because the httpserver is multithreaded
 
-string HART_MUX_IP = "192.168.254.254";
+string BCAST_ADDR = "192.168.1.255";
 
 int main(int argc, char *argv[]) {
-    // if (nettools::ping(HART_MUX_IP.c_str()) == 0) {
-    //     cout << "Successful ping @ " << HART_MUX_IP << endl;
-    // }
-    
-    // hart_mux.initSession();
-
-    // hart_mux.autodiscoverSubDevices();
-    // HartDevice sensor = hart_mux.readSubDeviceSummary(1);
-    // sensor.print();
-
-    // cout << "sending cmd 11" << endl;
-    // uint8_t data[512];
-    // uint8_t res[512];
-    // size_t resSize;
-    // hart_mux.sendCmd(11, sensor.addrUniq, data, 0, res, resSize);
-    // cout << "recieved" << endl;
-    // printBytes(res, resSize);
-
-    // hart_var_set sensor_vars = hart_mux.readSubDeviceVars(sensor);
-    // displayVars(sensor_vars);
-    // cout << endl;
-    // hart_mux.print();
-    // cout << "\tmax IO cards: " << (uint32_t)hart_mux.ioCapabilities.maxIoCards << endl;
-    // cout << "\tmax channels per IO card: " << (uint32_t)hart_mux.ioCapabilities.maxChannels << endl;
-    // cout << "\t# of devices connected: " << (uint32_t)hart_mux.ioCapabilities.numConnectedDevices << endl;
-    // cout << "\tmaster mode: " << (uint32_t)hart_mux.ioCapabilities.masterMode << endl;
-
-    // cout << endl;
-    
-    // while (!hart_mux.stopAutodiscovery) {
-    //     hart_mux.autodiscoverSubDevices();
-    //     hart_mux.listDevices();
-    //     sleep(1);
-    // }
-    // hart_mux.closeSession();
-
-    // cout << discoverGWs().dump(2) << endl;
-
     /***
      * webserver on port 5900
      * library: https://github.com/yhirose/cpp-httplib
@@ -63,7 +25,6 @@ int main(int argc, char *argv[]) {
 
     Server s;
     s.Get("/", [](const Request& req, Response& res) {
-        cout << "GET /" << endl;
         res.set_header("Access-Control-Allow-Origin", "*");
         res.set_content("This is the beginnings of a HART MUX web API!\n\n\
         Routes:\n\
@@ -230,22 +191,9 @@ int main(int argc, char *argv[]) {
         res.set_content(to_json(var_set).dump(), "text/json");
     });
 
-    const uint64_t DATA_CHUNK_SIZE = 4;
-
-    // s.Get("/stream", [&](const Request &req, Response &res) {
-    //     auto data = new std::string("abcdefg");
-
-    //     res.set_content_provider(data->size(), // Content length
-    //         [data](uint64_t offset, uint64_t length, DataSink sink) {
-    //             const auto &d = *data;
-    //             sink(&d[offset], std::min(length, DATA_CHUNK_SIZE));
-    //         },
-    //         [data] { delete data; });
-    // });
-
-    string domain = "localhost";
+    string domain = "0.0.0.0";
     unsigned int port = 5900;
-    cout << "starting webserver at "+domain+":"<<port<<endl;
+    cout << "starting HART IP server at "+domain+":"<<port<<endl;
     s.listen(domain.c_str(), port);
     // end webserver
 

@@ -1,0 +1,70 @@
+#!/bin/bash
+# hartip-server : This starts and stops hartip-server
+#
+# description: Starts a HART IP server on 0.0.0.0:59000
+# processname: hartip-server
+# pidfile: /var/run/hartip-server.pid
+# Source function library.
+. /etc/init.d/functions
+
+pname="hartip-server"
+exe="/opt/plcnext/hartip/arm_hartip_server"
+pidfile="/var/run/${pname}.pid"
+lockfile="/var/lock/subsys/${pname}"
+
+[ -x $exe ] || exit 0
+
+RETVAL=0
+
+start() {
+    echo -n "Starting $pname : "
+    if [ -s ${pidfile} ]; then
+       RETVAL=1
+       echo -n "Already running !" && warning
+       echo
+    else
+       nohup ${exe} >/dev/null 2>&1 &
+       RETVAL=$?
+       PID=$!
+       [ $RETVAL -eq 0 ] && touch ${lockfile} && success || failure
+       echo
+       echo $PID > ${pidfile}
+    fi
+}
+
+stop() {
+    echo -n "Shutting down $pname : "
+    killproc ${exe}
+    RETVAL=$?
+    echo
+    if [ $RETVAL -eq 0 ]; then
+        rm -f ${lockfile}
+        rm -f ${pidfile}
+    fi
+}
+
+restart() {
+    echo -n "Restarting $pname : "
+    stop
+    sleep 2
+    start
+}
+
+case "$1" in
+    start)
+        start
+    ;;
+    stop)
+        stop
+    ;;
+    status)
+        status ${pname}
+    ;;
+    restart)
+        restart
+    ;;
+    *)
+        echo "Usage: $0 {start|stop|status|restart}"
+    ;; esac
+
+exit 0

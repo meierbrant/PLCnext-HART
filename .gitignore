@@ -3,3 +3,5 @@ udp_gw_discover
 *.out
 .vscode
 arm_server
+
+arm_hartip_server
