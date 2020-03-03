@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     });
 
     s.Get("/gw/discover", [](const Request& req, Response& res) {
-        json gwData = discoverGWs();
+        json gwData = discoverGWs(BCAST_ADDR);
         res.set_header("Access-Control-Allow-Origin", "*");
         res.set_content(gwData.dump(), "text/json");
     });
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     // GET /gw/{serialNo}/info
     s.Get(R"(/gw/(\d+)/info)", [](const Request& req, Response& res) {
         string serialNo(req.matches[1]);
-        json gws = discoverGWs();
+        json gws = discoverGWs(BCAST_ADDR);
         json gwData;
         for (int i=0; i<gws["gateways"].size(); i++) {
             gwData = gws["gateways"][i];
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
         string ioCard(req.matches[2]);
         string channel(req.matches[3]);
 
-        json gws = discoverGWs();
+        json gws = discoverGWs(BCAST_ADDR);
         json gwData;
         for (int i=0; i<gws["gateways"].size(); i++) {
             gwData = gws["gateways"][i];
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     s.Get(R"(/gw/(\d+)/vars)", [](const Request& req, Response& res) {
         string serialNo(req.matches[1]);
 
-        json gws = discoverGWs();
+        json gws = discoverGWs(BCAST_ADDR);
         json gwData;
         for (int i=0; i<gws["gateways"].size(); i++) {
             gwData = gws["gateways"][i];
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
         string serialNo(req.matches[1]);
         string ioCard(req.matches[2]);
 
-        json gws = discoverGWs();
+        json gws = discoverGWs(BCAST_ADDR);
         json gwData;
         for (int i=0; i<gws["gateways"].size(); i++) {
             gwData = gws["gateways"][i];
@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
         string ioCard(req.matches[2]);
         string channel(req.matches[3]);
 
-        json gws = discoverGWs();
+        json gws = discoverGWs(BCAST_ADDR);
         json gwData;
         for (int i=0; i<gws["gateways"].size(); i++) {
             gwData = gws["gateways"][i];

@@ -7,4 +7,4 @@ using nlohmann::json;
 
 bool isBcastAddr(string ip);
 string resolveIoCardType(char moduleCode);
-json discoverGWs();
+json discoverGWs(string bcastAddr);

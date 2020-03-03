@@ -34,13 +34,15 @@ string resolveIoCardType(char moduleCode) {
     }
 }
 
-json discoverGWs() {
+json discoverGWs(string bcastAddr) {
     json gwData;
     string query, serialNo, recvAddr;
     char buf[256];
     UdpSocket s(5000);
-    string bcastAddr = "192.168.254.255";
     recvAddr = bcastAddr;
+
+    // UDP is unreliable, so send the bcast and listen multiple times
+    int numtries = 3;
 
     // FIXME: inconsistently getting correct recvAddr (50%)
     query = "GW PL ETH search.req\0";
