@@ -52,7 +52,7 @@ mkdir -p /opt/plcnext/hartip
 From the linux dev machine, cross-compile the C++ backend for ARM and copy the cross-compiled binary to the PLCnext:
 ```
 scp arm_hartip_server admin@192.168.1.10:/opt/plcnext/hartip
-scp -r lib/hart-csv admin@192.168.1.10:/opt/plcnext/hartip
+scp -r hart-csv admin@192.168.1.10:/opt/plcnext/hartip
 ```
 
 Build the web UI assets and copy them to the PLCnext:
@@ -61,7 +61,7 @@ cd hmi/pxc-hart-management
 npm run build
 scp -r dist admin@192.168.1.10:/opt/plcnext/hartip
 ```
-You should now have both the `arm_hartip_server` binary and the `dist` directory with the web UI assets in `/opt/plcnext/hartip`.
+You should now have both the `arm_hartip_server` binary, the `hart-csv` directory, and the `dist` directory with the web UI assets in `/opt/plcnext/hartip`.
 
 ### Adding the Hart Management Web UI to the Nginx server
 SSH into the PLCnext and edit the nginx conf file, `/etc/nginx/nginx.conf`.
@@ -69,7 +69,7 @@ SSH into the PLCnext and edit the nginx conf file, `/etc/nginx/nginx.conf`.
 Find the port 80 server section and mount the hartip `dist` folder at `/hartip`. Make sure to comment out the SSL redirect line. This is necessary because the hartip-server only supports HTTP, not HTTPS.
 ```bash
     server {
-        listen  80
+        listen  80;
 
         location /hartip {
             alias /opt/plcnext/hartip/dist;
@@ -86,6 +86,11 @@ Don't forget to restart nginx as root:
 ```
 
 ### Making the HART IP server run on startup
+Copy `hartip_server_loop.sh` from the host machine to `/opt/plcnext/hartip` on the PLCnext:
+```bash
+scp hartip_server_loop.sh admin@192.168.1.10:/opt/plcnext/hartip
+```
+
 As root, copy the `hartip-server` script in this repo to `/etc/init.d/` and change its permissions to `755`. Then add it to the default daemons for startup:
 ```bash
 update-rc.d hartip-server defaults

@@ -8,7 +8,9 @@
 . /etc/init.d/functions
 
 pname="hartip-server"
-exe="/opt/plcnext/hartip/arm_hartip_server"
+path="/opt/plcnext/hartip/"
+#exe="${path}arm_hartip_server"
+exe="${path}hartip_server_loop.sh"
 pidfile="/var/run/${pname}.pid"
 lockfile="/var/lock/subsys/${pname}"
 

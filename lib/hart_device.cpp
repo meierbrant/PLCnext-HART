@@ -10,8 +10,8 @@ using std::endl;
 using std::string;
 using aria::csv::CsvParser;
 
-#define HART_DEVICE_INFO_CSV_FILE "lib/hart-csv/HART-expanded-device-type-codes.csv"
-#define HART_UNIT_CODE_CSV_FILE "lib/hart-csv/HART-unit-codes.csv"
+#define HART_DEVICE_INFO_CSV_FILE "hart-csv/HART-expanded-device-type-codes.csv"
+#define HART_UNIT_CODE_CSV_FILE "hart-csv/HART-unit-codes.csv"
 
 HartDevice::HartDevice() {}
 
