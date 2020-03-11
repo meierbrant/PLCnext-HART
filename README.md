@@ -123,11 +123,7 @@ npm run build
     This function re-parses the CSV file each time a lookup needs to be done (once per variable update). It would be good to parse the file once and keep the info in memory.
 
 
-* About 30% of the time, when the `hart_mux_server` is started, it is incapable of discovering gateways no matter how many times you ask it. When trying to access `/gw/{serialNo}/info`, the server throws the following error:
-    ```
-    terminate called after throwing an instance of 'nlohmann::detail::type_error'
-    what():  [json.exception.type_error.302] type must be string, but is null
-    ```
+* About 30% of the time, when the `hart_mux_server` is started, it is incapable of discovering gateways no matter how many times you ask it.
 
     It is known that occasionally, after the discovery network broadcast is sent out, the response appears to be sourced from the broadcase address (i.e. 192.168.254.255) instead of from the gateway that sent the response. When this happens the first time in the server, it seems that no matter how many times the server attempts this process, the result is the same. This may mean that there is some outside condition that must be true when the server starts.
 

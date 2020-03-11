@@ -131,6 +131,7 @@ int main(int argc, char *argv[]) {
      */
 
     Server s;
+
     s.Get("/", [](const Request& req, Response& res) {
         res.set_header("Access-Control-Allow-Origin", "*");
         res.set_content("\
@@ -183,6 +184,7 @@ int main(int argc, char *argv[]) {
     s.Get("/gw/discover", [](const Request& req, Response& res) {
         cout << "GET /gw/discover" << endl;
         json gwData = discoverGWs(BCAST_ADDR);
+
         res.set_header("Access-Control-Allow-Origin", "*");
         res.set_content(gwData.dump(), "text/json");
     });
