@@ -8,6 +8,11 @@
 #include "lib/cpp-httplib/httplib.h"
 
 using namespace std;
+using httplib::Server;
+using httplib::Request;
+using httplib::Response;
+using httplib::DataSink;
+using nettools::netif_summary;
 
 // NOTE: this must be compiled with the -pthread flag because the httpserver is multithreaded
 
@@ -18,10 +23,6 @@ int main(int argc, char *argv[]) {
      * webserver on port 5900
      * library: https://github.com/yhirose/cpp-httplib
      */
-    using httplib::Server;
-    using httplib::Request;
-    using httplib::Response;
-    using httplib::DataSink;
 
     Server s;
     s.Get("/", [](const Request& req, Response& res) {
@@ -29,6 +30,7 @@ int main(int argc, char *argv[]) {
         res.set_content("This is the beginnings of a HART MUX web API!\n\n\
         Routes:\n\
         GET\t/\t\t\t\t\twelcome page\n\
+        GET\t/networks/discover\t\t\tdiscover all visible Class B and Class C external networks\n\
         GET\t/gw/discover\t\t\t\tdiscover all gateways on the network\n\
         GET\t/gw/{serialNo}/info\t\t\tHART MUX info (including connected devices)\n\
         GET\t/gw/{serialNo}/info/{card}/{ch}\t\tread device info\n\
@@ -37,7 +39,29 @@ int main(int argc, char *argv[]) {
         GET\t/gw/{serialNo}/vars/{card}/{ch}\t\tread vars from device\n", "text/plain");
     });
 
+    // GET /networks/discover
+    s.Get("/networks/discover", [](const Request& req, Response& res) {
+        // cout << "GET /networks/discover" << endl;
+        netif_summary *cur_netif;
+        int count;
+        nettools::get_feasible_subnets(&cur_netif, &count);
+        json nwData = json::array();
+        for (int i=0; i<count; i++) {
+            nwData[i] = {
+                {"name", cur_netif->name},
+                {"addr", cur_netif->addr},
+                {"netmask", cur_netif->netmask},
+                {"bcast", cur_netif->bcast}
+            };
+            cur_netif = cur_netif->next;
+        }
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_content(nwData.dump(), "text/json");
+    });
+
+    // GET /gw/discover
     s.Get("/gw/discover", [](const Request& req, Response& res) {
+        // cout << "GET /gw/discover" << endl;
         json gwData = discoverGWs(BCAST_ADDR);
         res.set_header("Access-Control-Allow-Origin", "*");
         res.set_content(gwData.dump(), "text/json");
@@ -45,6 +69,7 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/info
     s.Get(R"(/gw/(\d+)/info)", [](const Request& req, Response& res) {
+        // cout << "GET /gw/{serialNo}/info" << endl;
         string serialNo(req.matches[1]);
         json gws = discoverGWs(BCAST_ADDR);
         json gwData;

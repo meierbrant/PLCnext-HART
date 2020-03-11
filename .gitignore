@@ -5,3 +5,7 @@ udp_gw_discover
 arm_server
 
 arm_hartip_server
+
+discover_network_info
+
+discover_network_info.cpp
