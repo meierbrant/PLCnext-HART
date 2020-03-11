@@ -61,7 +61,7 @@ json discoverGWs(string bcastAddr) {
         module = resolveIoCardType(buf[i]);
         if (!module.empty()) ioArray[i] = module;
     }
-    gwData["gateways"][0] = {
+    gwData[0] = {
         {"ip", recvAddr},
         {"serialNo", serialNo},
         {"modules", ioArray}

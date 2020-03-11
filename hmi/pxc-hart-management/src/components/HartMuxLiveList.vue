@@ -146,8 +146,8 @@ export default class HartMuxLiveList extends Vue {
 
     public gwLookup () {
         this.$http.get(hartServerUrl + '/gw/discover').then(res => {
-            const gws = res.data as HartGwDto
-            this.gw = gws.gateways.find(gw => gw.serialNo === this.gwSN) || this.gw
+            const gws = res.data as HartGw[]
+            this.gw = gws.find(gw => gw.serialNo === this.gwSN) || this.gw
         })
     }
 

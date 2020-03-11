@@ -10,7 +10,7 @@
 
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator'
-import { hartServerUrl, HartMuxDto, HartGwDto, HartGw } from '../types'
+import { hartServerUrl, HartMuxDto, HartGw } from '../types'
 
 @Component({})
 export default class HartGateways extends Vue {
@@ -28,7 +28,7 @@ export default class HartGateways extends Vue {
 
     public updateGateways () {
         this.$http.get(hartServerUrl + '/gw/discover').then(res => {
-            this.gateways = (res.data as HartGwDto).gateways
+            this.gateways = (res.data as HartGw[])
         })
     }
 }

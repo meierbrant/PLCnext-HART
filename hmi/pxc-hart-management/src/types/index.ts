@@ -11,8 +11,4 @@ export interface HartGw {
     serialNo: number
 }
 
-export interface HartGwDto {
-    gateways: HartGw[]
-}
-
 export const hartServerUrl = "http://"+location.host.split(':')[0]+":5900"
