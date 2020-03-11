@@ -3,3 +3,6 @@ udp_gw_discover
 data/*
 *.out
 .vscode
+arm_server
+discover_network_info
+discover_network_info.cpp

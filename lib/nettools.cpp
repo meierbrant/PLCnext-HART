@@ -1,17 +1,11 @@
 #include "nettools.hpp"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <arpa/inet.h>
+#include <ifaddrs.h>
 #include <sys/socket.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <netdb.h>
-#include <iostream>
+#include <regex>
 
-// int nettools::ping(std::string ipv4) {
-//     return ping((const char *)&ipv4);
-//}
+using std::string;
 
 // TODO: fix ping. It always returns 0;
 int nettools::ping(const char *ipv4) {
@@ -74,8 +68,6 @@ int nettools::ping(const char *ipv4) {
         echo_response->sequence_number
     );
 
-    std::cout << echo_response << std::endl;
-
     if (1) {
     
     } else {
@@ -85,4 +77,62 @@ int nettools::ping(const char *ipv4) {
 
     return 0;
     
+}
+
+// netif_p is a pointer to the first node in a linked list
+int nettools::get_netif_summaries(netif_summary **netif_p, int *num_ifs) {
+    ifaddrs* addr_item_p;
+    int r = getifaddrs(&addr_item_p);
+
+    if (r < 0) {
+        perror("getifaddrs()");
+        return r;
+    }
+
+    netif_summary *cur_if_p = (netif_summary*)malloc(sizeof(netif_summary));
+    *netif_p = cur_if_p;
+    *num_ifs = 0;
+    while (addr_item_p && addr_item_p->ifa_next) {     
+
+        if (addr_item_p->ifa_netmask) {
+            inet_ntop(AF_INET, &(((struct sockaddr_in *)addr_item_p->ifa_addr)->sin_addr), cur_if_p->addr, sizeof(cur_if_p->addr));
+            in_addr _netmask = ((struct sockaddr_in *)addr_item_p->ifa_netmask)->sin_addr;
+            in_addr _addr = ((struct sockaddr_in *)addr_item_p->ifa_addr)->sin_addr;
+            struct in_addr _bcast;
+            _bcast.s_addr = _addr.s_addr | ~_netmask.s_addr;
+            inet_ntop(AF_INET, &_netmask, cur_if_p->netmask, sizeof(cur_if_p->netmask));
+            strcpy(cur_if_p->name, addr_item_p->ifa_name);
+            inet_ntop(AF_INET, &_bcast, cur_if_p->bcast, sizeof(cur_if_p->bcast));
+
+            cur_if_p->next = (netif_summary*)malloc(sizeof(netif_summary));
+            cur_if_p = cur_if_p->next;
+            (*num_ifs)++;
+        }
+        
+        addr_item_p = addr_item_p->ifa_next;
+    };
+
+    printf("done\n");
+    return 0;
+}
+
+int nettools::get_feasible_subnets(netif_summary **netif_p, int *count) {
+    netif_summary *cur_net;
+    int totalCount;
+    *count = 0;
+    get_netif_summaries(&cur_net, &totalCount);
+
+    netif_summary *prev_feas_netif = nullptr;
+    for (int i=0; i<totalCount; i++) {
+        if (std::regex_match(cur_net->netmask, std::regex("255\\.255\\.\\d{0,3}\\.\\d{0,3}"))) {
+            if (prev_feas_netif == nullptr) {
+                *netif_p = cur_net;
+            } else {
+                prev_feas_netif->next = cur_net;
+            }
+            prev_feas_netif = cur_net;
+            (*count)++;
+        }
+        cur_net = cur_net->next;
+    }
 }

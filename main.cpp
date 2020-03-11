@@ -14,6 +14,7 @@ using httplib::Server;
 using httplib::Request;
 using httplib::Response;
 using httplib::DataSink;
+using nettools::netif_summary;
 
 // NOTE: this must be compiled with the -pthread flag because the httpserver is multithreaded
 
@@ -158,6 +159,27 @@ int main(int argc, char *argv[]) {
         </table>", "text/html");
     });
 
+    // GET /networks/discover
+    s.Get("/networks/discover", [](const Request& req, Response& res) {
+        // cout << "GET /networks/discover" << endl;
+        netif_summary *cur_netif;
+        int count;
+        nettools::get_feasible_subnets(&cur_netif, &count);
+        json nwData = json::array();
+        for (int i=0; i<count; i++) {
+            nwData[i] = {
+                {"name", cur_netif->name},
+                {"addr", cur_netif->addr},
+                {"netmask", cur_netif->netmask},
+                {"bcast", cur_netif->bcast}
+            };
+            cur_netif = cur_netif->next;
+        }
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_content(nwData.dump(), "text/json");
+    });
+
+    // GET /gw/discover
     s.Get("/gw/discover", [](const Request& req, Response& res) {
         cout << "GET /gw/discover" << endl;
         json gwData = discoverGWs(BCAST_ADDR);
