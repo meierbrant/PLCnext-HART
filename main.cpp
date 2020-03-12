@@ -40,7 +40,7 @@ json with_gw_data_or_error(Request req, Response &res, json (*gwDataHandler)(Req
         return json::object({
             {"error", {
                 {"status", res.status},
-                {"message", "404: gateway with SN " + serialNo + " was not found"}
+                {"message", "gateway with SN " + serialNo + " was not found"}
             }}
         });
     }

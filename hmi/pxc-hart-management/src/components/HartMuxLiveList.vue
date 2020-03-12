@@ -85,7 +85,7 @@ export default class HartMuxLiveList extends Vue {
         this.polling = setInterval(this.refreshDevices, 2000)
 
         // pull live list from cache if present
-        if (localStorage.liveList) {
+        if (localStorage.liveList && localStorage.liveList.gw && localStorage.liveList.gw.serialNo) {
             const llc = JSON.parse(localStorage.liveList) as LiveListCache
             if (llc.gw.serialNo === this.gwSN) {
                 this.gw = llc.gw
@@ -96,6 +96,8 @@ export default class HartMuxLiveList extends Vue {
                     })
                 })
                 this.devices = llc.devices
+            } else {
+                this.gwLookup()
             }
         } else {
             this.gwLookup()

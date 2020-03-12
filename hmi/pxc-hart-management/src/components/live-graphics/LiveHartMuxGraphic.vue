@@ -59,10 +59,12 @@ export default class LiveHartMuxGraphic extends Vue {
     }
 
     updateDeviceData () {
-        this.$http.get(hartServerUrl + '/gw/' + this.gw.serialNo + '/info').then(res => {
-            const data = res.data as HartMuxDto
-            this.deviceData = data.devices
-        })
+        if (this.gw.serialNo != 0) {
+            this.$http.get(hartServerUrl + '/gw/' + this.gw.serialNo + '/info').then(res => {
+                const data = res.data as HartMuxDto
+                this.deviceData = data.devices
+            })
+        }
     }
 }
 </script>
