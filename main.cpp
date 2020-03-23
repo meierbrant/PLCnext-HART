@@ -18,7 +18,8 @@ using nettools::netif_summary;
 
 // NOTE: this must be compiled with the -pthread flag because the httpserver is multithreaded
 
-string BCAST_ADDR = "192.168.1.255";
+string BCAST_ADDR = "";
+json networks;
 
 const string UNIVERSAL_CMD_DEF_DIR = "cmd-definitions/universal";
 json JSON_SUPPORTED_HART_CMDS = json::array();
@@ -102,6 +103,25 @@ void loadSupportedHartCommands() {
     }
 }
 
+json discoverNetworks() {
+    netif_summary *cur_netif;
+    int count;
+    nettools::get_feasible_subnets(&cur_netif, &count);
+    json nwData = json::array();
+    for (int i=0; i<count; i++) {
+        nwData[i] = {
+            {"name", cur_netif->name},
+            {"addr", cur_netif->addr},
+            {"netmask", cur_netif->netmask},
+            {"network", cur_netif->network},
+            {"bcast", cur_netif->bcast}
+        };
+        cur_netif = cur_netif->next;
+    }
+    networks = nwData;
+    return nwData;
+}
+
 int main(int argc, char *argv[]) {
     // load supported HART commands
     loadSupportedHartCommands();
@@ -131,6 +151,7 @@ int main(int argc, char *argv[]) {
      */
 
     Server s;
+    discoverNetworks();
 
     s.Get("/", [](const Request& req, Response& res) {
         res.set_header("Access-Control-Allow-Origin", "*");
@@ -163,21 +184,35 @@ int main(int argc, char *argv[]) {
     // GET /networks/discover
     s.Get("/networks/discover", [](const Request& req, Response& res) {
         // cout << "GET /networks/discover" << endl;
-        netif_summary *cur_netif;
-        int count;
-        nettools::get_feasible_subnets(&cur_netif, &count);
-        json nwData = json::array();
-        for (int i=0; i<count; i++) {
-            nwData[i] = {
-                {"name", cur_netif->name},
-                {"addr", cur_netif->addr},
-                {"netmask", cur_netif->netmask},
-                {"bcast", cur_netif->bcast}
-            };
-            cur_netif = cur_netif->next;
-        }
         res.set_header("Access-Control-Allow-Origin", "*");
-        res.set_content(nwData.dump(), "text/json");
+        res.set_content(discoverNetworks().dump(), "text/json");
+    });
+
+    // POST /networks/select
+    s.Post("/networks/select", [&](const auto& req, auto& res) {
+        httplib::Params params = req.params;
+        json data = {
+            {"status", res.status = 503},
+            {"message", "could not find that network"}
+        };
+
+        auto it = params.find("network");
+        if (it != params.end()) {
+            for (int i=0; i<networks.size(); i++) {
+                string ip = networks[i]["network"];
+                if (ip.compare(it->second) == 0) {
+                    BCAST_ADDR = networks[i]["bcast"];
+                    data["status"] = res.status = 300;
+                    data["message"] = "success";
+                }
+            }
+        } else {
+            data["status"] = res.status = 400;
+            data["message"] = "no network specified";
+        }
+
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_content(data.dump(), "text/json");
     });
 
     // GET /gw/discover

@@ -6,6 +6,7 @@ namespace nettools {
         netif_summary *next;
         char name[16];
         char addr[16];
+        char network[16];
         char netmask[16];
         char bcast[16];
     };

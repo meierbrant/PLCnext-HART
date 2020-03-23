@@ -99,10 +99,13 @@ int nettools::get_netif_summaries(netif_summary **netif_p, int *num_ifs) {
             in_addr _netmask = ((struct sockaddr_in *)addr_item_p->ifa_netmask)->sin_addr;
             in_addr _addr = ((struct sockaddr_in *)addr_item_p->ifa_addr)->sin_addr;
             struct in_addr _bcast;
+            struct in_addr _netw;
             _bcast.s_addr = _addr.s_addr | ~_netmask.s_addr;
+            _netw.s_addr  = _addr.s_addr & _netmask.s_addr;
             inet_ntop(AF_INET, &_netmask, cur_if_p->netmask, sizeof(cur_if_p->netmask));
             strcpy(cur_if_p->name, addr_item_p->ifa_name);
             inet_ntop(AF_INET, &_bcast, cur_if_p->bcast, sizeof(cur_if_p->bcast));
+            inet_ntop(AF_INET, &_netw, cur_if_p->network, sizeof(cur_if_p->network));
 
             cur_if_p->next = (netif_summary*)malloc(sizeof(netif_summary));
             cur_if_p = cur_if_p->next;
