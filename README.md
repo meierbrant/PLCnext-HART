@@ -2,6 +2,26 @@
 
 The goal of this C++ library is to allow the PLCnext to connect with HART devices through the Phoenix Contact `GW PL ETH/UNI-BUS` or `GW PL ETH/BASIC-BUS`.
 
+When cloning this repo, make sure to `--recurse-submodules` to get `cpp-httplib`.
+
+## Test from Linux Dev Machine
+<!-- Make sure `libssl-dev` and `libssl-dev:1386` are installed. -->
+Compile with:
+```
+g++ -pthread -o hart_mux_server main.cpp lib/*.cpp
+```
+
+To start the HTTP server for the HART Gateway API at `localhost:5900`:
+```
+./hart_mux_server
+```
+
+To start the UI webserver at `localhost:8080`:
+```
+cd hmi/pxc-hart-management
+npm run serve
+```
+
 ## Deploy on PLCnext
 _Note: For Windows, you can use [WinSCP](https://winscp.net/eng/index.php) instead of scp to graphically transfer files and you can use [PuTTY](https://www.putty.org/) for ssh._
 
