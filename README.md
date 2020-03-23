@@ -2,6 +2,8 @@
 
 The goal of this C++ library is to allow the PLCnext to connect with HART devices through the Phoenix Contact HART MUX.
 
+When cloning this repo, make sure to `--recurse-submodules` to get `cpp-httplib`.
+
 ## Test from Linux Dev Machine
 <!-- Make sure `libssl-dev` and `libssl-dev:1386` are installed. -->
 Compile with:

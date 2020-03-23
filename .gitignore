@@ -1,11 +1,9 @@
-hart_mux_server
-udp_gw_discover
 *.out
 .vscode
+
 arm_server
-
 arm_hartip_server
-
 discover_network_info
-
 discover_network_info.cpp
+hart_mux_server
+udp_gw_discover
