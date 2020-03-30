@@ -18,7 +18,7 @@ using nettools::netif_summary;
 
 // NOTE: this must be compiled with the -pthread flag because the httpserver is multithreaded
 
-string BCAST_ADDR = "";
+string BCAST_ADDR = "192.168.1.255";
 json networks;
 
 const string UNIVERSAL_CMD_DEF_DIR = "cmd-definitions/universal";
@@ -181,28 +181,35 @@ int main(int argc, char *argv[]) {
         </table>", "text/html");
     });
 
-    // GET /networks/discover
-    s.Get("/networks/discover", [](const Request& req, Response& res) {
+    // Allow GET, POST to /networks
+    s.Options("/networks", [](const Request& req, Response& res) {
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_header("Access-Control-Allow-Headers", "content-type");
+        res.set_header("Access-Control-Allow-Methods", "GET, POST");
+    });
+
+    // GET /networks
+    s.Get("/networks", [](const Request& req, Response& res) {
         // cout << "GET /networks/discover" << endl;
         res.set_header("Access-Control-Allow-Origin", "*");
         res.set_content(discoverNetworks().dump(), "text/json");
     });
 
-    // POST /networks/select
-    s.Post("/networks/select", [&](const auto& req, auto& res) {
-        httplib::Params params = req.params;
+    // POST /networks
+    s.Post("/networks", [&](const Request& req, Response& res) {
+        json postData = json::parse(req.body);
         json data = {
             {"status", res.status = 503},
             {"message", "could not find that network"}
         };
 
-        auto it = params.find("network");
-        if (it != params.end()) {
+        if (postData["network"].is_string()) {
             for (int i=0; i<networks.size(); i++) {
                 string ip = networks[i]["network"];
-                if (ip.compare(it->second) == 0) {
+                if (ip.compare(postData["network"]) == 0) {
                     BCAST_ADDR = networks[i]["bcast"];
-                    data["status"] = res.status = 300;
+                    cout << "new BCAST_ADDR: " << BCAST_ADDR << endl;
+                    data["status"] = res.status = 200;
                     data["message"] = "success";
                 }
             }
@@ -368,9 +375,21 @@ int main(int argc, char *argv[]) {
         res.set_content(data.dump(), "text/json");
     });
 
+    // GET catchall -> render 404
+    s.Get(R"(/(.+))", [](const Request& req, Response& res) {
+        json data = {
+            {"status", res.status = 404},
+            {"message", "route not found"}
+        };
+        
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_content(data.dump(), "text/json");
+    });
+
     string domain = "0.0.0.0";
     unsigned int port = 5900;
     cout << "starting HART IP server at "+domain+":"<<port<<endl;
+    cout << "initial BCAST_ADDR: " << BCAST_ADDR << endl;
     s.listen(domain.c_str(), port);
     // end webserver
 

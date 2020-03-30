@@ -3,7 +3,6 @@
   <h1 class="cover-heading">Phoenix Contact HART Management System</h1>
   <p class="lead">Easily view and manage your HART device network.</p>
   <p class="lead">
-    Detected Hart Gateways:
     <HartGateways />
   </p>
 </main>

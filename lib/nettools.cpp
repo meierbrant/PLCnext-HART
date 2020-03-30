@@ -114,8 +114,6 @@ int nettools::get_netif_summaries(netif_summary **netif_p, int *num_ifs) {
         
         addr_item_p = addr_item_p->ifa_next;
     };
-
-    printf("done\n");
     return 0;
 }
 

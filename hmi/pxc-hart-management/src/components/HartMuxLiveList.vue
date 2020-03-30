@@ -91,9 +91,10 @@ export default class HartMuxLiveList extends Vue {
         this.polling = setInterval(this.refreshDevices, updateInterval)
 
         // pull live list from cache if present
-        if (localStorage.liveList) {
+        if (localStorage.liveList && localStorage.liveList.gw && localStorage.liveList.gw.serialNo) {
             const llc = JSON.parse(localStorage.liveList) as LiveListCache
             if (llc.gw.serialNo === this.gwSN) {
+                console.log(llc)
                 this.gw = llc.gw
                 llc.devices.forEach(dev => {
                     if (dev.vars) Object.keys(dev.vars).forEach(key => {
@@ -102,6 +103,8 @@ export default class HartMuxLiveList extends Vue {
                     })
                 })
                 this.devices = llc.devices
+            } else {
+                this.gwLookup()
             }
         } else {
             this.gwLookup()
@@ -136,7 +139,11 @@ export default class HartMuxLiveList extends Vue {
                 }
             })
         })
-        this.nextIoCardUpdate = (this.nextIoCardUpdate + 1) % this.gw.modules.length;
+        if (this.gw.modules.length != 0) {
+            this.nextIoCardUpdate = (this.nextIoCardUpdate + 1) % this.gw.modules.length;
+        } else {
+            this.gwLookup()
+        }
     }
 
     public refreshDevicesNoVars(): PromiseLike<void | HttpResponse> {

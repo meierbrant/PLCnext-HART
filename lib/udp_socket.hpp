@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <iostream>
+#include <functional>   /* for std::function */
 
 using std::string;
 using std::cout;
@@ -21,5 +22,6 @@ class UdpSocket {
     UdpSocket(int port=80);
     int sendto(string ip, const char *msg, size_t len, int flags=0);
     int recvfrom(string &ip, char *buf, size_t len, int flags=0);
+    int recvfromMultiple(string bcast, char *buf, size_t len, std::function<void(string srcIP, char *buf, size_t len)> callback, int flags=0, int timeout=1000000); // timeout in ms
     int close();
 };
