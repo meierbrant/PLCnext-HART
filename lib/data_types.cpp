@@ -56,6 +56,15 @@ hart_pdu_frame buildPduFrame(uint8_t *addrUniq, uint8_t cmd, uint8_t *data, size
     return f;
 }
 
+string bytesToHexStr(uint8_t *bytes, int len) {
+    std::stringstream ss;
+    ss << hex;
+
+    for (int i=0; i<len; ++i)
+        ss << setw(2) << setfill('0') << (int)bytes[i] << " ";
+
+    return ss.str();
+}
 
 size_t serialize(hart_pdu_frame f, uint8_t *bytes) {
     memcpy(bytes, &f.delimiter, 1);

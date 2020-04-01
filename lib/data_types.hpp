@@ -74,6 +74,8 @@ hart_pdu_frame buildPduFrame(uint8_t *addrUniq, uint8_t cmd, uint8_t *data=nullp
 
 void printBytes(uint8_t *bytes, size_t len);
 
+string bytesToHexStr(uint8_t *bytes, int len);
+
 void serialize(hart_ip_hdr_t header, uint8_t *bytes);
 hart_ip_hdr_t deserializeHartIpHdr(uint8_t *bytes);
 

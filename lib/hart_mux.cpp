@@ -258,6 +258,36 @@ void HartMux::sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData, 
     resDataCnt = recvData(resData);
 }
 
+void HartMux::sendSubDeviceCmd(unsigned char cmd, HartDevice dev, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt) {
+    #ifdef DEBUG
+    cout << "sendSubDeviceCmd()" << endl;
+    #endif
+
+    hart_pdu_frame innerFrame = buildPduFrame(dev.addrUniq, cmd, reqData, reqDataCnt);
+    innerFrame.addr[0] = innerFrame.addr[0] & 0x3f | 0x80; // long poll address
+    uint8_t innerData[255];
+    size_t bCnt = 0;
+    innerData[bCnt++] = dev.ioCard;
+    innerData[bCnt++] = dev.channel;
+    innerData[bCnt++] = 5; // transmit preamble countserialize(innerFrame, innerData);
+    bCnt += serialize(innerFrame, &innerData[bCnt]);
+    hart_pdu_frame outerFrame = buildPduFrame(addrUniq, 77, innerData, bCnt);
+
+    sendPduFrame(outerFrame);
+    hart_pdu_frame f = recvPduFrame();
+    while (f.byteCnt == 2) { // got a bad response
+        sendPduFrame(outerFrame);
+        f = recvPduFrame();
+    }
+
+    hart_pdu_frame f2 = deserializeHartPduFrame(&f.data[4]); // 4 is start of inner PDU frame
+    printf("inner PDU frame:\tcmd: %i\tbyteCnt: %i\taddr: ", f2.cmd, f2.byteCnt); printBytes(f2.addr, sizeof(f2.addr));
+    printf("\t data: \n"); printBytes(&f2.data[2], f2.byteCnt-2);
+    
+    resDataCnt = f2.byteCnt-2;
+    memcpy(resData, &f2.data[2], resDataCnt);
+}
+
 int HartMux::send(uint8_t *bytes, size_t len, int flags) {
     int r = sock.send(bytes, len, flags);
     if (r < 0) {

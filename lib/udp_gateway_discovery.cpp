@@ -5,6 +5,12 @@
 using namespace std;
 using nlohmann::json;
 
+class NoGatewaysException: public exception {
+  virtual const char* what() const throw() {
+    return "no gateways responded";
+  }
+};
+
 bool isBcastAddr(string ip) {
     char bcast_check[] = "255";
     if (ip[12] == bcast_check[0] &&
@@ -35,7 +41,7 @@ string resolveIoCardType(char moduleCode) {
 }
 
 json discoverGWs(string bcastAddr) {
-    json gwData;
+    json gwArray = json::array();
     string query, serialNo, recvAddr;
     char buf[256];
     UdpSocket s(5000);
@@ -61,12 +67,13 @@ json discoverGWs(string bcastAddr) {
         module = resolveIoCardType(buf[i]);
         if (!module.empty()) ioArray[i] = module;
     }
-    gwData["gateways"][0] = {
+    gwArray[0] = {
         {"ip", recvAddr},
         {"serialNo", serialNo},
         {"modules", ioArray}
     };
-    return gwData;
+    if (gwArray.size() == 0) throw NoGatewaysException();
+    return gwArray;
 }
 
 // int main() {

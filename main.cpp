@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string.h>
+#include <cinttypes>
 #include "lib/nettools.hpp"
 #include "lib/socket.hpp"
 #include "lib/hart_mux.hpp"
@@ -8,20 +9,48 @@
 #include "lib/cpp-httplib/httplib.h"
 
 using namespace std;
+using httplib::Server;
+using httplib::Request;
+using httplib::Response;
+using httplib::DataSink;
 
 // NOTE: this must be compiled with the -pthread flag because the httpserver is multithreaded
 
 string BCAST_ADDR = "192.168.1.255";
+
+json find_gw_by_sn(string bcast_addr, string serialNo) {
+    json gws = discoverGWs(bcast_addr);
+    json gwData = NULL;
+    for (int i=0; i<gws.size(); i++) {
+        if (gws[i]["serialNo"] == serialNo) {
+            gwData = gws[i];
+            break;
+        }
+    }
+    return gwData;
+}
+
+json with_gw_data_or_error(Request req, Response &res, json (*gwDataHandler)(Request, json)) {
+    string serialNo(req.matches[1]);
+    json gwData = find_gw_by_sn(BCAST_ADDR, serialNo);
+    if (gwData != NULL) {
+        return gwDataHandler(req, gwData);
+    } else {
+        res.status = 404;
+        return json::object({
+            {"error", {
+                {"status", res.status},
+                {"message", "gateway with SN " + serialNo + " was not found"}
+            }}
+        });
+    }
+}
 
 int main(int argc, char *argv[]) {
     /***
      * webserver on port 5900
      * library: https://github.com/yhirose/cpp-httplib
      */
-    using httplib::Server;
-    using httplib::Request;
-    using httplib::Response;
-    using httplib::DataSink;
 
     Server s;
     s.Get("/", [](const Request& req, Response& res) {
@@ -189,6 +218,38 @@ int main(int argc, char *argv[]) {
         hart_mux.closeSession();
         res.set_header("Access-Control-Allow-Origin", "*");
         res.set_content(to_json(var_set).dump(), "text/json");
+    });
+
+    // GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/cmd/{cmd}
+    s.Get(R"(/gw/(\d+)/subdevice/(\d+)/(\d+)/cmd/(\d+))", [](const Request& req, Response& res) {
+        // cout << "GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/cmd/{cmd}" << endl;
+        json data = with_gw_data_or_error(req, res, [](Request req, json gwData) {
+            string ioCard(req.matches[2]);
+            string channel(req.matches[3]);
+            int cmd = stoi(req.matches[4]);
+
+            HartMux hart_mux(gwData["ip"]);
+            hart_mux.initSession();
+            hart_mux.autodiscoverSubDevices();
+            HartDevice dev;
+            for (int i=0; i<hart_mux.ioCapabilities.numConnectedDevices; i++) {
+                dev = hart_mux.devices[i];
+                if (dev.ioCard == (uint8_t)stoi(ioCard) && dev.channel == (uint8_t)stoi(channel)) break;
+            }
+
+            uint8_t buf[512];
+            size_t cnt;
+            hart_mux.sendSubDeviceCmd(cmd, dev, nullptr, 0, buf, cnt);
+            hart_mux.closeSession();
+
+            json r = {
+                {"response", bytesToHexStr(buf, cnt)}
+            };
+            return r;
+        });
+        
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_content(data.dump(), "text/json");
     });
 
     string domain = "0.0.0.0";
