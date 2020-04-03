@@ -8,10 +8,13 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <thread>
+#include <exception>
 
 using std::string;
 using std::thread;
 using nlohmann::json;
+
+class CmdDefNotFound : public std::exception {};
 
 class HartMux : public HartDevice {
     public:
@@ -80,3 +83,6 @@ private:
 };
 
 void autodiscoverLoop(HartMux *mux, int seconds);
+
+json cmdRsponseToJson(int cmd, uint8_t *data, int len);
+json parseResponseBytes(uint8_t *bytes, string format, int count);

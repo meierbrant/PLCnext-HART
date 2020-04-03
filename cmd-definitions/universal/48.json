@@ -1,0 +1,72 @@
+{
+    "number": 48,
+    "description": "Read Additional Device Status",
+    "requestData": null,
+    "responseData": [
+        {
+            "byte": "0-5",
+            "format": "bits or enum only",
+            "description": "Device-Specific Status (refer to appropriate device-specific document for detailed information)"
+        },
+        {
+            "byte": 6,
+            "format": "bits",
+            "description": "Extended Device Status (refer to Common Table 17, Extended Device Status Information)"
+        },
+        {
+            "byte": 7,
+            "format": "bits",
+            "description": "Device Operating Mode (refer to Common Table 14, Operating Mode Codes)"
+        },
+        {
+            "byte": 8,
+            "format": "bits",
+            "description": "Standardized Status 0 (refer to Common Table 29)"
+        },
+        
+        {
+            "byte": 9,
+            "format": "bits",
+            "description": "Standardized Status 1 (refer to Common Table 30)"
+        },
+        {
+            "byte": 10,
+            "format": "bits",
+            "description": "Analog Channel Saturated (refer to Common Table 27)"
+        },
+        {
+            "byte": 11,
+            "format": "bits",
+            "description": "Standardized Status 2 (refer to Common Table 31)"
+        },
+        {
+            "byte": 12,
+            "format": "bits",
+            "description": "Standardized Status 1 (refer to Common Table 32)"
+        },
+        {
+            "byte": 13,
+            "format": "bits",
+            "description": "Analog Channel Fixed (refer to Common Table 28)"
+        },
+        {
+            "byte": "14-24",
+            "format": "bits or enum only",
+            "description": "Device-Specific Status (refer to appropriate device-specific document for detailed information)"
+        }
+    ],
+    "responseCodes": {
+        "0": {
+            "class": "success",
+            "description": "No Command-Specific Errors"
+        },
+        "6": {
+            "class": "error",
+            "description": "Device-Specific Command Error"
+        },
+        "16": {
+            "class": "error",
+            "description": "Access Restricted"
+        }
+    }
+}

@@ -1,0 +1,46 @@
+{
+    "number": 14,
+    "description": "Read Primary Variable Transducer Information",
+    "requestData": null,
+    "responseData": [
+        {
+            "byte": "0-2",
+            "format": "unsigned-24",
+            "description": "Transducer Serial Number"
+        },
+        {
+            "byte": 3,
+            "format": "enum",
+            "description": "Transducer Limits and Minimum Span Units Code (refer to Common Tables Specification)"
+        },
+        {
+            "byte": "4-7",
+            "format": "float",
+            "description": "Upper Transducer Limit"
+        },
+        {
+            "byte": "8-11",
+            "format": "float",
+            "description": "Lower Transducer Limit"
+        },
+        {
+            "byte": "12-15",
+            "format": "float",
+            "description": "Minimum Specs"
+        }
+    ],
+    "responseCodes": {
+        "0": {
+            "class": "success",
+            "description": "No Command-Specific Errors"
+        },
+        "16": {
+            "class": "error",
+            "description": "Access Restricted"
+        },
+        "32": {
+            "class": "error",
+            "description": "Busy"
+        }
+    }
+}

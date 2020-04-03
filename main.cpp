@@ -20,6 +20,7 @@ string BCAST_ADDR = "192.168.1.255";
 
 json find_gw_by_sn(string bcast_addr, string serialNo) {
     json gws = discoverGWs(bcast_addr);
+    cout << "gws: " << gws.dump() << endl;
     json gwData = NULL;
     for (int i=0; i<gws.size(); i++) {
         if (gws[i]["serialNo"] == serialNo) {
@@ -30,16 +31,15 @@ json find_gw_by_sn(string bcast_addr, string serialNo) {
     return gwData;
 }
 
-json with_gw_data_or_error(Request req, Response &res, json (*gwDataHandler)(Request, json)) {
+json with_gw_data_or_error(Request req, Response &res, json (*gwDataHandler)(Request, Response, json)) {
     string serialNo(req.matches[1]);
     json gwData = find_gw_by_sn(BCAST_ADDR, serialNo);
     if (gwData != NULL) {
-        return gwDataHandler(req, gwData);
+        return gwDataHandler(req, res, gwData);
     } else {
-        res.status = 404;
         return json::object({
             {"error", {
-                {"status", res.status},
+                {"status", res.status = 404},
                 {"message", "gateway with SN " + serialNo + " was not found"}
             }}
         });
@@ -63,7 +63,8 @@ int main(int argc, char *argv[]) {
         GET\t/gw/{serialNo}/info/{card}/{ch}\t\tread device info\n\
         GET\t/gw/{serialNo}/vars\t\t\tget list of all devices w/ their vars\n\
         GET\t/gw/{serialNo}/vars/{ioCard}\t\tget list of all devices on this io card w/ their vars\n\
-        GET\t/gw/{serialNo}/vars/{card}/{ch}\t\tread vars from device\n", "text/plain");
+        GET\t/gw/{serialNo}/vars/{card}/{ch}\t\tread vars from device\n\
+        GET\t/gw/{serialNo}/subdevice/{ioCard}/{channel}/cmd/{cmd}\n", "text/plain");
     });
 
     s.Get("/gw/discover", [](const Request& req, Response& res) {
@@ -223,7 +224,7 @@ int main(int argc, char *argv[]) {
     // GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/cmd/{cmd}
     s.Get(R"(/gw/(\d+)/subdevice/(\d+)/(\d+)/cmd/(\d+))", [](const Request& req, Response& res) {
         // cout << "GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/cmd/{cmd}" << endl;
-        json data = with_gw_data_or_error(req, res, [](Request req, json gwData) {
+        json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
             string ioCard(req.matches[2]);
             string channel(req.matches[3]);
             int cmd = stoi(req.matches[4]);
@@ -242,10 +243,17 @@ int main(int argc, char *argv[]) {
             hart_mux.sendSubDeviceCmd(cmd, dev, nullptr, 0, buf, cnt);
             hart_mux.closeSession();
 
-            json r = {
-                {"response", bytesToHexStr(buf, cnt)}
-            };
-            return r;
+            json result;
+            try {
+                result = cmdRsponseToJson(cmd, buf, cnt);
+            } catch (CmdDefNotFound e) {
+                result = {
+                    {"status", res.status = 400},
+                    {"message", "Command not found. No JSON definition file?"}
+                };
+            }
+
+            return result;
         });
         
         res.set_header("Access-Control-Allow-Origin", "*");

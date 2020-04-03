@@ -1,0 +1,26 @@
+{
+    "number": 20,
+    "description": "Read Long Tag",
+    "requestData": null,
+    "responseData": [
+        {
+            "byte": "0-31",
+            "format": "latin-1",
+            "description": "Long Tag"
+        }
+    ],
+    "responseCodes": {
+        "0": {
+            "class": "success",
+            "description": "No Command-Specific Errors"
+        },
+        "16": {
+            "class": "error",
+            "description": "Access Restricted"
+        },
+        "32": {
+            "class": "error",
+            "description": "Busy"
+        }
+    }
+}

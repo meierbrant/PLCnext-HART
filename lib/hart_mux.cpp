@@ -4,10 +4,13 @@
 #include "nettools.hpp"
 #include "nlohmann/json.hpp"
 #include <string.h>
+#include <fstream>
 
 // #define DEBUG
 
 using nlohmann::json;
+
+const string CMD_DEFINITIONS_DIR = "cmd-definitions";
 
 // Constructor defined in header
 
@@ -415,4 +418,81 @@ json HartMux::to_json() {
     }
 
     return data;
+}
+
+json cmdRsponseToJson(int cmd, uint8_t *data, int len) {
+    json r = {
+        {"data", json::array()},
+        {"code", json::object()}
+    };
+    json cmdDef;
+    string configFile = CMD_DEFINITIONS_DIR + "/universal/" + std::to_string(cmd) + ".json";
+    std::ifstream f(configFile.c_str());
+    if (!f) throw CmdDefNotFound();
+    f >> cmdDef;
+
+    cout << cmdDef["number"] << "\t" << cmdDef["description"] << endl;
+    r["number"] = cmdDef["number"];
+    r["description"] = cmdDef["description"];
+
+    for (int i=0; i<cmdDef["responseData"].size(); i++) {
+        json fieldDef = cmdDef["responseData"][i];
+        json parsedVal;
+        cout << "fieldDef: " << fieldDef.dump() << endl;
+        string format(fieldDef["format"]);
+        if (fieldDef["byte"].is_string()) { // it's a range of bytes
+            string rangestr(fieldDef["byte"]);
+            std::stringstream rangess(rangestr);
+            std::string segment;
+            std::vector<int> range;
+
+            while(std::getline(rangess, segment, '-')) {
+                range.push_back(stoi(segment));
+            }
+
+            if (range[1]+1 > len) return r; // optional data bytes not present
+            parsedVal = parseResponseBytes(&data[range[0]], format, range[1]-range[0]+1);
+        } else if (fieldDef["byte"].is_number_unsigned()) { // it's a single byte
+            if ((int)fieldDef["byte"]+1 > len) return r; // optional data byte not present
+            parsedVal = parseResponseBytes(&data[(int)fieldDef["byte"]], format, 1);
+        }
+
+        r["data"][i] = {
+            {"byte", fieldDef["byte"]},
+            {"format", fieldDef["format"]},
+            {"description", fieldDef["description"]},
+            {"value", parsedVal}
+        };
+    }
+
+    return r;
+}
+
+json parseResponseBytes(uint8_t *bytes, string format, int count) {
+    printf("parseResponseBytes(format: %s, count: %i, bytes: ", format.c_str(), count); printBytes(bytes, count);
+    json val;
+    if (format.compare("float") == 0) {
+        float f;
+        memcpy(&f, bytes, 4);
+        val = f;
+    } else if (format.compare("unsigned-24") == 0) {
+        unsigned int i;
+        memcpy(&i+1, bytes, 3);
+        val = i;
+    } else if (format.compare("bits") == 0) {
+        json bitArray = json::array();
+        for (int byte=0; byte<count; byte++) {
+            for (int bit=0; bit<8; bit++) {
+                bitArray[8*byte+bit] = ((bytes[byte] >> bit) & 1) ? 1 : 0;
+            }
+        }
+        val = bitArray;
+    } else if (format.compare("latin-1") == 0) {
+        bytes[count] = '\0';
+        string s((char*)bytes);
+        val = s;
+    } else {
+        val = bytesToHexStr(bytes, count);
+    }
+    return val;
 }
