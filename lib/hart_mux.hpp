@@ -40,7 +40,7 @@ class HartMux : public HartDevice {
     int sendCmd(unsigned char cmd, uint8_t pollAddr);
     int sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData=NULL, size_t reqDataCnt=0);
     void sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt);
-    void sendSubDeviceCmd(unsigned char cmd, HartDevice dev, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt);
+    void sendSubDeviceCmd(unsigned char cmd, HartDevice dev, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt, uint8_t &status);
     json to_json();
 
 private:
@@ -84,5 +84,5 @@ private:
 
 void autodiscoverLoop(HartMux *mux, int seconds);
 
-json cmdRsponseToJson(int cmd, uint8_t *data, int len);
+json cmdRsponseToJson(int cmd, uint8_t *data, int len, uint8_t status);
 json parseResponseBytes(uint8_t *bytes, string format, int count);

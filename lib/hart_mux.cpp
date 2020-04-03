@@ -261,7 +261,7 @@ void HartMux::sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData, 
     resDataCnt = recvData(resData);
 }
 
-void HartMux::sendSubDeviceCmd(unsigned char cmd, HartDevice dev, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt) {
+void HartMux::sendSubDeviceCmd(unsigned char cmd, HartDevice dev, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt, uint8_t &status) {
     #ifdef DEBUG
     cout << "sendSubDeviceCmd()" << endl;
     #endif
@@ -287,6 +287,7 @@ void HartMux::sendSubDeviceCmd(unsigned char cmd, HartDevice dev, uint8_t *reqDa
     printf("inner PDU frame:\tcmd: %i\tbyteCnt: %i\taddr: ", f2.cmd, f2.byteCnt); printBytes(f2.addr, sizeof(f2.addr));
     printf("\t data: \n"); printBytes(&f2.data[2], f2.byteCnt-2);
     
+    status = response.header.status;
     resDataCnt = f2.byteCnt-2;
     memcpy(resData, &f2.data[2], resDataCnt);
 }
@@ -420,25 +421,27 @@ json HartMux::to_json() {
     return data;
 }
 
-json cmdRsponseToJson(int cmd, uint8_t *data, int len) {
-    json r = {
-        {"data", json::array()},
-        {"code", json::object()}
-    };
+json cmdRsponseToJson(int cmd, uint8_t *data, int len, uint8_t status) {
+    json r;
     json cmdDef;
     string configFile = CMD_DEFINITIONS_DIR + "/universal/" + std::to_string(cmd) + ".json";
     std::ifstream f(configFile.c_str());
     if (!f) throw CmdDefNotFound();
     f >> cmdDef;
 
-    cout << cmdDef["number"] << "\t" << cmdDef["description"] << endl;
     r["number"] = cmdDef["number"];
     r["description"] = cmdDef["description"];
+    r["status"] = cmdDef["responseCodes"][std::to_string(status)];
+    if (r["status"].is_null()) r["status"] = {
+        {"class", "error"},
+        {"description:", "unknown"}
+    };
+    r["data"] = json::array();
 
     for (int i=0; i<cmdDef["responseData"].size(); i++) {
         json fieldDef = cmdDef["responseData"][i];
         json parsedVal;
-        cout << "fieldDef: " << fieldDef.dump() << endl;
+        // cout << "fieldDef: " << fieldDef.dump() << endl;
         string format(fieldDef["format"]);
         if (fieldDef["byte"].is_string()) { // it's a range of bytes
             string rangestr(fieldDef["byte"]);
@@ -469,7 +472,7 @@ json cmdRsponseToJson(int cmd, uint8_t *data, int len) {
 }
 
 json parseResponseBytes(uint8_t *bytes, string format, int count) {
-    printf("parseResponseBytes(format: %s, count: %i, bytes: ", format.c_str(), count); printBytes(bytes, count);
+    // printf("parseResponseBytes(format: %s, count: %i, bytes: ", format.c_str(), count); printBytes(bytes, count);
     json val;
     if (format.compare("float") == 0) {
         float f;

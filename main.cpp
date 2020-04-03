@@ -240,12 +240,13 @@ int main(int argc, char *argv[]) {
 
             uint8_t buf[512];
             size_t cnt;
-            hart_mux.sendSubDeviceCmd(cmd, dev, nullptr, 0, buf, cnt);
+            uint8_t status;
+            hart_mux.sendSubDeviceCmd(cmd, dev, nullptr, 0, buf, cnt, status);
             hart_mux.closeSession();
 
             json result;
             try {
-                result = cmdRsponseToJson(cmd, buf, cnt);
+                result = cmdRsponseToJson(cmd, buf, cnt, status);
             } catch (CmdDefNotFound e) {
                 result = {
                     {"status", res.status = 400},
