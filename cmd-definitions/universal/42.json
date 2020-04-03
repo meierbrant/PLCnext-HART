@@ -1,0 +1,24 @@
+{
+    "number": 42,
+    "description": "Perform Device Reset",
+    "requestData": null,
+    "responseData": [],
+    "responseCodes": {
+        "0": {
+            "class": "success",
+            "description": "No Command-Specific Errors"
+        },
+        "6": {
+            "class": "error",
+            "description": "Device-Specific Command Error"
+        },
+        "16": {
+            "class": "error",
+            "description": "Access Restricted"
+        },
+        "32": {
+            "class": "error",
+            "description": "Busy"
+        }
+    }
+}
