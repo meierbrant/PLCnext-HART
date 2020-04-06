@@ -60,7 +60,9 @@ json discoverGWs(string bcastAddr) {
     s.sendto(recvAddr, query.c_str(), query.length());
     int n = s.recvfrom(recvAddr, buf, sizeof(buf));
     // printBytes((uint8_t*)buf, n);
-    if (n<0) return json::object();
+    
+    if (n<0) { throw NoGatewaysException(); return gwArray; }
+
     json ioArray = json::array();
     string module;
     for (int i=0; i<5; i++) {
@@ -72,7 +74,6 @@ json discoverGWs(string bcastAddr) {
         {"serialNo", serialNo},
         {"modules", ioArray}
     };
-    if (gwArray.size() == 0) throw NoGatewaysException();
     return gwArray;
 }
 

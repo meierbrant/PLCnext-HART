@@ -428,6 +428,7 @@ json cmdRsponseToJson(int cmd, uint8_t *data, int len, uint8_t status) {
     std::ifstream f(configFile.c_str());
     if (!f) throw CmdDefNotFound();
     f >> cmdDef;
+    f.close();
 
     r["number"] = cmdDef["number"];
     r["description"] = cmdDef["description"];
