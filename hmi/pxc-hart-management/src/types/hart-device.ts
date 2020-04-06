@@ -84,3 +84,27 @@ export class HartDevice implements HartDeviceDto {
         }
     }
 }
+
+export type hart_command_brief = {
+    "number": number,
+    "description": string
+}
+
+export type hart_command_data_field = {
+    byte: string | number,
+    format: string,
+    description: string,
+    value: any
+}
+
+export type hart_command_status = {
+    class: "success" | "error" | "warning",
+    description: string
+}
+
+export type hart_command_response = {
+    number: number,
+    description: string,
+    data: hart_command_data_field[],
+    status: hart_command_status
+}

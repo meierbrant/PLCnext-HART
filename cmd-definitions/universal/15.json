@@ -1,0 +1,66 @@
+{
+    "number": 15,
+    "description": "Read Device Information",
+    "requestData": null,
+    "responseData": [
+        {
+            "byte": 0,
+            "format": "enum",
+            "description": "PV Alarm Selection Code (see Common Table 6, Alarm Selection Codes). The Alarm Selection Code indicates the action taken by the device under error conditions. For transmitters, the code indicates the action taken by the Loop Current. For Actuators, the action taken by the positioner is indicated."
+        },
+        {
+            "byte": 1,
+            "format": "enum",
+            "description": "PV Transfer Function Code (see Common Table 3, Transfer Function Codes). The Transfer Function Code must return \"0\", Linear, if transfer functions are not supported by the device."
+        },
+        {
+            "byte": 2,
+            "format": "enum",
+            "description": "PV Upper and Lower Range Values Units Code (refer to Common Tables Specification)"
+        },
+        {
+            "byte": "3-6",
+            "format": "float",
+            "description": "PV Upper Range Value"
+        },
+        {
+            "byte": "7-10",
+            "format": "float",
+            "description": "PV Lower Range Value"
+        },
+        {
+            "byte": "11-14",
+            "format": "float",
+            "description": "PV Damping Value (units of seconds)"
+        },
+        {
+            "byte": 15,
+            "format": "enum",
+            "description": "Write Protect Code (see Common Table 7, Write Protect Codes). The Write Protect Code must return \"251\", None, when write protect is not implemented by a device."
+        },
+        {
+            "byte": 16,
+            "format": "enum",
+            "description": "Reserved. Must be set to \"250\", Not Used."
+        },
+        {
+            "byte": 17,
+            "format": "bits",
+            "description": "PV Analog Channel Flags (see Common Table 26, Analog Channel Flags)"
+        }
+    ],
+    "responseCodes": {
+        "0": {
+            "class": "success",
+            "description": "No Command-Specific Errors"
+        },
+        "16": {
+            "class": "error",
+            "description": "Access Restricted"
+        },
+        "32": {
+            "class": "error",
+            "description": "Busy"
+        }
+    }
+}

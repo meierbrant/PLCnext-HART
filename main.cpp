@@ -7,6 +7,7 @@
 #include "lib/data_types.hpp"
 #include "lib/udp_gateway_discovery.hpp"
 #include "lib/cpp-httplib/httplib.h"
+#include <fstream>
 
 using namespace std;
 using httplib::Server;
@@ -17,6 +18,9 @@ using httplib::DataSink;
 // NOTE: this must be compiled with the -pthread flag because the httpserver is multithreaded
 
 string BCAST_ADDR = "192.168.1.255";
+
+const string UNIVERSAL_CMD_DEF_DIR = "cmd-definitions/universal";
+json JSON_SUPPORTED_HART_CMDS = json::array();
 
 json gatewaysCache = json::array();
 
@@ -52,6 +56,20 @@ json with_gw_data_or_error(Request req, Response &res, json (*gwDataHandler)(Req
 }
 
 int main(int argc, char *argv[]) {
+    // load supported HART commands
+    for (int cmd=0; cmd<50; cmd++) {
+        json cmdDef;
+        string configFile = UNIVERSAL_CMD_DEF_DIR + "/" + std::to_string(cmd) + ".json";
+        std::ifstream f(configFile.c_str());
+        if (!f) continue;
+        f >> cmdDef;
+        f.close();
+        JSON_SUPPORTED_HART_CMDS[JSON_SUPPORTED_HART_CMDS.size()] = {
+            {"number", cmd},
+            {"description", cmdDef["description"]}
+        };
+    }
+
     /***
      * webserver on port 5900
      * library: https://github.com/yhirose/cpp-httplib
@@ -243,6 +261,20 @@ int main(int argc, char *argv[]) {
             }
 
             return result;
+        });
+        
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_content(data.dump(), "text/json");
+    });
+
+    // GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/commands
+    s.Get(R"(/gw/(\d+)/subdevice/(\d+)/(\d+)/commands)", [](const Request& req, Response& res) {
+        // cout << "GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/commands" << endl;
+        json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
+            string ioCard(req.matches[2]);
+            string channel(req.matches[3]);
+
+            return JSON_SUPPORTED_HART_CMDS;
         });
         
         res.set_header("Access-Control-Allow-Origin", "*");

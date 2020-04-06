@@ -20,24 +20,6 @@
                         </div>
                     </section>
                 </div>
-                <br>
-                <div class="row">
-                    <section class="">
-                        <h2>Send a Command</h2>
-                        <div id="send-cmd">
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control" placeholder="command #" aria-label="cmdnum" aria-describedby="basic-addon2">
-                                <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button">Send</button>
-                                </div>
-                            </div>
-                            <div id="cmd-result">
-                                <h3>Response</h3>
-                                <p data-bind="text: cmdResponse.data"></p>
-                            </div>
-                        </div>
-                    </section>
-                </div>
             </div>
             <div class="col-md-6"> <!-- right column-->
                 <section class="var-grid">
@@ -55,24 +37,78 @@
                 </section>
             </div>
         </div>
+
+        <div class="row">
+            <section class="">
+                <div id="send-cmd">
+                    <div class="input-group mb-3">
+                        <!-- <input type="text" class="form-control" placeholder="command #" aria-label="cmdnum" aria-describedby="basic-addon2"> -->
+                        <b-dropdown id="dropdown-1" :text="'Send a Command'" class="m-md-2">
+                            <b-dropdown-item v-for="cmd in supportedCommands" v-bind:key="cmd.number" v-on:click="sendCmd(cmd);">
+                                {{ cmd.number + ": " + cmd.description }}</b-dropdown-item>
+                        </b-dropdown>
+                        <!-- <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" v-on:click="sendCmd()">Send</button>
+                        </div> -->
+                    </div>
+                    <div id="cmd-result" v-if="cmdResponse != null">
+                        <h3>Response</h3>
+                        <b-card no-body>
+                            <b-tabs card>
+                            <b-tab title="Table" active>
+                                <b-table striped hover :items="cmdResponse.data"></b-table>
+                            </b-tab>
+                            <b-tab title="JSON">
+                                <vue-json-pretty
+                                    :path="'res'"
+                                    :data="cmdResponse">
+                                </vue-json-pretty>
+                            </b-tab>
+                            </b-tabs>
+                        </b-card>
+                    </div>
+                </div>
+            </section>
+        </div>
     </div>
 </template>
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
-import { HartDeviceDto, verboseHartDeviceAttrs } from '../types/hart-device'
+import { HartDeviceDto, verboseHartDeviceAttrs, hart_command_brief, hart_command_response } from '../types/hart-device'
 import { HartVars } from '../types/hart-vars'
+import { hartServerUrl } from '../types'
+// @ts-ignore
+import VueJsonPretty from 'vue-json-pretty'
 
 @Component({
     components: {
+        VueJsonPretty
     }
 })
 export default class HartDeviceComponent extends Vue {
     @Prop() device!: HartDeviceDto
+    public supportedCommands: hart_command_brief[] = []
+    public cmdResponse: hart_command_response | null = null
     public hartAttrs = verboseHartDeviceAttrs
+
+    mounted() {
+        // load supported HART commands
+        this.$http.get(hartServerUrl + '/gw/' + this.$route.params.serialNo + '/subdevice/' + this.device.ioCard + '/' + this.device.channel + '/commands').then(res => {
+            const data = res.data as hart_command_brief[]
+            this.supportedCommands = data
+        })
+    }
 
     get vars(): HartVars | undefined {
         return this.device.vars
+    }
+
+    sendCmd(cmd: hart_command_brief) {
+        this.$http.get(hartServerUrl + '/gw/' + this.$route.params.serialNo + '/subdevice/' + this.device.ioCard + '/' + this.device.channel + '/cmd/' + cmd.number).then(res => {
+            const data = res.data as hart_command_response
+            this.cmdResponse = data
+        })
     }
 }
 </script>

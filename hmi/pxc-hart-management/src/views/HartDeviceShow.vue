@@ -8,7 +8,7 @@
 // @ is an alias to /src
 import { Vue, Component, Prop } from 'vue-property-decorator'
 import HartDeviceComponent from '@/components/HartDeviceComponent.vue'
-import { HartMuxDto, hartServerUrl } from '../types'
+import { HartMuxDto, hartServerUrl, updateInterval } from '../types'
 import { HartDeviceDto } from '../types/hart-device'
 import { HartVarsDto, HartVars } from '../types/hart-vars'
 
@@ -36,7 +36,7 @@ export default class HartDeviceShow extends Vue {
 
   mounted() {
     this.updateDevice()
-    this.polling = setInterval(this.updateDevice, 2000)
+    this.polling = setInterval(this.updateDevice, updateInterval)
     
     // pull device from cache if present
     if (localStorage.device) {
@@ -57,16 +57,19 @@ export default class HartDeviceShow extends Vue {
   }
 
   public updateDevice() {
+    let serialNo = this.$route.params.serialNo
+    let ioCard = this.$route.params.ioCard
+    let channel = this.$route.params.channel
     let updatedDevice: HartDeviceDto
-    this.$http.get(hartServerUrl + '/gw/' + this.$route.params.serialNo + '/info').then(res => {
+    this.$http.get(hartServerUrl + '/gw/' + serialNo + '/info').then(res => {
       const data = res.data as HartMuxDto
       data.devices.forEach(device => {
-        if (device.ioCard == parseInt(this.$route.params.ioCard, 10)
-            && device.channel == parseInt(this.$route.params.channel, 10)) updatedDevice = device
+        if (device.ioCard == parseInt(ioCard, 10)
+            && device.channel == parseInt(channel, 10)) updatedDevice = device
       })
     }).then(() => {
       if (updatedDevice) {
-        this.$http.get(hartServerUrl + '/gw/' + this.$route.params.serialNo + '/vars/'
+        this.$http.get(hartServerUrl + '/gw/' + serialNo + '/vars/'
             + updatedDevice.ioCard + '/' + updatedDevice.channel).then(res => {
           const data = res.data as HartVarsDto
           let vars: HartVars = data as HartVars

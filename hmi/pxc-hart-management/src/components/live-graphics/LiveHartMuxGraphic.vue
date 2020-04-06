@@ -16,7 +16,7 @@
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
 import HartMuxIoCard from '@/components/live-graphics/HartMuxIoCard.vue'
-import { hartServerUrl, HartMuxDto, HartGw, HartGwDto } from '../../types'
+import { hartServerUrl, HartMuxDto, HartGw, updateInterval } from '../../types'
 import { HartDeviceDto } from '../../types/hart-device'
 
 @Component({
@@ -34,7 +34,7 @@ export default class LiveHartMuxGraphic extends Vue {
     mounted () {
         this.gwLookup()
         this.updateDeviceData()
-        this.polling = setInterval(this.updateDeviceData, 2000)
+        this.polling = setInterval(this.updateDeviceData, updateInterval)
     }
 
     beforeDestroy () {
@@ -53,8 +53,8 @@ export default class LiveHartMuxGraphic extends Vue {
 
     gwLookup () {
         this.$http.get(hartServerUrl + '/gw/discover').then(res => {
-            const gws = res.data as HartGwDto
-            this.gw = gws.gateways.find(gw => gw.serialNo == this.gwSN) || this.gw
+            const gws = res.data as HartGw[]
+            this.gw = gws.find(gw => gw.serialNo == this.gwSN) || this.gw
         })
     }
 

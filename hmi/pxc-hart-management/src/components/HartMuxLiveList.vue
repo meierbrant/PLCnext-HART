@@ -30,7 +30,7 @@
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator';
-import { HartMuxDto, hartServerUrl, HartGw, HartGwDto } from '../types'
+import { HartMuxDto, hartServerUrl, HartGw, updateInterval } from '../types'
 import { HttpResponse } from 'vue-resource/types/vue_resource';
 import { HartVars, HartDeviceVarsListDto } from '../types/hart-vars';
 import { HartDeviceDto } from '../types/hart-device';
@@ -82,7 +82,7 @@ export default class HartMuxLiveList extends Vue {
 
     mounted() {
         this.nextIoCardUpdate = 0
-        this.polling = setInterval(this.refreshDevices, 2000)
+        this.polling = setInterval(this.refreshDevices, updateInterval)
 
         // pull live list from cache if present
         if (localStorage.liveList) {
@@ -146,8 +146,8 @@ export default class HartMuxLiveList extends Vue {
 
     public gwLookup () {
         this.$http.get(hartServerUrl + '/gw/discover').then(res => {
-            const gws = res.data as HartGwDto
-            this.gw = gws.gateways.find(gw => gw.serialNo === this.gwSN) || this.gw
+            const gws = res.data as HartGw[]
+            this.gw = gws.find(gw => gw.serialNo === this.gwSN) || this.gw
         })
     }
 
