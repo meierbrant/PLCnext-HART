@@ -1,14 +1,18 @@
 #include "hart_mux.hpp"
 #include "hart_devices.hpp"
+#include "csv-parser/parser.hpp"
 
 #include "nettools.hpp"
 #include "nlohmann/json.hpp"
 #include <string.h>
 #include <fstream>
+#include <ctime>
 
 // #define DEBUG
 
 using nlohmann::json;
+using std::to_string;
+using aria::csv::CsvParser;
 
 const string CMD_DEFINITIONS_DIR = "cmd-definitions";
 
@@ -169,7 +173,7 @@ void HartMux::listDevices() {
     }
 }
 
-
+// Goes to the HART MUX to get the vars
 hart_var_set HartMux::readSubDeviceVars(HartDevice dev) {
     #ifdef DEBUG
     cout << "readSubDeviceVars()" << endl;
@@ -196,6 +200,125 @@ hart_var_set HartMux::readSubDeviceVars(HartDevice dev) {
 
     hart_var_set vars = deserializeHartVarSet(&f2.data[2], f2.byteCnt-2);
     return vars;
+}
+
+string getLastLineOfFile(string filepath) {
+    std::string line = "";
+    std::ifstream f(filepath);
+
+    if (f.is_open()) {
+        f.seekg(0, std::ios_base::end);
+        char c = ' ';
+        while(c != '\n'){
+            f.seekg(-2, std::ios_base::cur);
+            if ((int)f.tellg() <= 0) {
+                f.seekg(0);
+                break;
+            }
+            f.get(c);
+        }
+
+        std::getline(f,line);
+        f.close();
+
+        return line;
+    } else {
+        throw std::exception();
+    }
+}
+
+hart_var_set HartMux::getSubDeviceVars(HartDevice dev) {
+    cout << "getSubDeviceVars()" << endl;
+
+    // zeroth device is itself
+    int n = ioCapabilities.numConnectedDevices - 1;
+    cout << "n: " << n << endl;
+    for (int i=0; i<n; i++) {
+        hart_var_set vars = readSubDeviceVars(devices[i]);
+    }
+}
+
+void HartMux::logVars(string dir) {
+    int n = ioCapabilities.numConnectedDevices - 1;
+    for (int i=0; i<n; i++) {
+        string path = dir+'/'+to_string(devices[i].ioCard)+'/'+to_string(devices[i].channel);
+        string mkdir = "mkdir -p " + path;
+        system(mkdir.c_str());
+        hart_var_set vars = readSubDeviceVars(devices[i]);
+        std::ofstream logfile;
+        // cout << "logging vars at " << path << endl;
+        logfile.open(path+"/vars.log.csv", std::ios_base::app);
+        
+        logfile << vars.pv.value << ',';
+        logfile << vars.pv.units << ',';
+
+        logfile << vars.sv.value << ',';
+        logfile << vars.sv.units << ',';
+
+        logfile << vars.tv.value << ',';
+        logfile << vars.tv.units << ',';
+
+        logfile << vars.qv.value << ',';
+        logfile << vars.qv.units << ',';
+
+        time_t now = time(0);
+        logfile << ctime(&now);
+    }
+}
+
+json HartMux::getLogData(string dir, int ioCard, int channel) {
+    json data = {
+        {"pv", json::array()},
+        {"sv", json::array()},
+        {"tv", json::array()},
+        {"qv", json::array()}
+    };
+    string path = dir+'/'+to_string(ioCard)+'/'+to_string(channel);
+    cout << "parsing " << path+"/vars.log.csv" << endl;
+    std::ifstream f(path+"/vars.log.csv");
+    CsvParser parser(f);
+
+    int r = 0;
+    int c = 0;
+    for (auto& row : parser) {
+        for (auto& field : row) {
+            switch (c) {
+                case 0:
+                    data["pv"][r]["value"] = field;
+                    break;
+                case 1:
+                    data["pv"][r]["units"] = field;
+                    break;
+                case 2:
+                    data["sv"][r]["value"] = field;
+                    break;
+                case 3:
+                    data["sv"][r]["units"] = field;
+                    break;
+                case 4:
+                    data["tv"][r]["value"] = field;
+                    break;
+                case 5:
+                    data["tv"][r]["units"] = field;
+                    break;
+                case 6:
+                    data["qv"][r]["value"] = field;
+                    break;
+                case 7:
+                    data["qv"][r]["units"] = field;
+                    break;
+                case 8:
+                    data["pv"][r]["timestamp"] = field;
+                    data["sv"][r]["timestamp"] = field;
+                    data["tv"][r]["timestamp"] = field;
+                    data["qv"][r]["timestamp"] = field;
+            }
+            c = (c + 1) % 9;
+        }
+        r++;
+    }
+
+    return data;
 }
 
 

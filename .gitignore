@@ -1,5 +1,6 @@
 hart_mux_server
 udp_gw_discover
+data/*
 *.out
 .vscode
 arm_server

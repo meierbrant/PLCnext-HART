@@ -31,7 +31,7 @@ json find_gw_by_sn(string bcast_addr, string serialNo) {
         }
     }
     
-    json gatewaysCache = discoverGWs(bcast_addr);
+    gatewaysCache = discoverGWs(bcast_addr);
     for (int i=0; i<gatewaysCache.size(); i++) {
         if (gatewaysCache[i]["serialNo"] == serialNo) {
             return gatewaysCache[i];
@@ -69,6 +69,24 @@ int main(int argc, char *argv[]) {
             {"description", cmdDef["description"]}
         };
     }
+
+    // periodically log the HART Gateway's subdevice variables
+    gatewaysCache = discoverGWs(BCAST_ADDR);
+    thread loggingThread([&]() {
+        while (true) {
+            sleep(60);
+            for (int i=0; i<gatewaysCache.size(); i++) {
+                HartMux hart_mux(gatewaysCache[i]["ip"]);
+                hart_mux.initSession();
+                hart_mux.autodiscoverSubDevices();
+
+                string sn = gatewaysCache[i]["serialNo"];
+                hart_mux.logVars("data/"+sn);
+                hart_mux.closeSession();
+            }
+        }
+    });
+    loggingThread.detach();
 
     /***
      * webserver on port 5900
@@ -221,6 +239,25 @@ int main(int argc, char *argv[]) {
             hart_var_set var_set = hart_mux.readSubDeviceVars(dev);
             hart_mux.closeSession();
             return to_json(var_set);
+        });
+
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_content(data.dump(), "text/json");
+    });
+
+    // GET /gw/{serialNo}/log/{ioCard}/{channel}
+    s.Get(R"(/gw/(\d+)/log/(\d+)/(\d+))", [](const Request& req, Response& res) {
+        json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
+            string serialNo(req.matches[1]);
+            string ioCard(req.matches[2]);
+            string channel(req.matches[3]);
+
+            HartMux hart_mux(gwData["ip"]);
+            hart_mux.initSession();
+            hart_mux.autodiscoverSubDevices();
+            json logData = hart_mux.getLogData("data/"+serialNo, stoi(ioCard), stoi(channel));
+            hart_mux.closeSession();
+            return logData;
         });
 
         res.set_header("Access-Control-Allow-Origin", "*");
