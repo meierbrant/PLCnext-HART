@@ -108,3 +108,16 @@ export type hart_command_response = {
     data: hart_command_data_field[],
     status: hart_command_status
 }
+
+export type hart_log_var = {
+    timestamp: string,
+    units: string,
+    value: number
+}
+
+export type hart_device_vars_log = {
+    pv: hart_log_var[],
+    sv: hart_log_var[],
+    tv: hart_log_var[],
+    qv: hart_log_var[]
+}

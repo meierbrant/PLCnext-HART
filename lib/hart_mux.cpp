@@ -228,7 +228,7 @@ string getLastLineOfFile(string filepath) {
 }
 
 hart_var_set HartMux::getSubDeviceVars(HartDevice dev) {
-    cout << "getSubDeviceVars()" << endl;
+    // cout << "getSubDeviceVars()" << endl;
 
     // zeroth device is itself
     int n = ioCapabilities.numConnectedDevices - 1;
@@ -274,7 +274,6 @@ json HartMux::getLogData(string dir, int ioCard, int channel) {
         {"qv", json::array()}
     };
     string path = dir+'/'+to_string(ioCard)+'/'+to_string(channel);
-    cout << "parsing " << path+"/vars.log.csv" << endl;
     std::ifstream f(path+"/vars.log.csv");
     CsvParser parser(f);
 
@@ -284,25 +283,25 @@ json HartMux::getLogData(string dir, int ioCard, int channel) {
         for (auto& field : row) {
             switch (c) {
                 case 0:
-                    data["pv"][r]["value"] = field;
+                    data["pv"][r]["value"] = stof(field);
                     break;
                 case 1:
                     data["pv"][r]["units"] = field;
                     break;
                 case 2:
-                    data["sv"][r]["value"] = field;
+                    data["sv"][r]["value"] = stof(field);
                     break;
                 case 3:
                     data["sv"][r]["units"] = field;
                     break;
                 case 4:
-                    data["tv"][r]["value"] = field;
+                    data["tv"][r]["value"] = stof(field);
                     break;
                 case 5:
                     data["tv"][r]["units"] = field;
                     break;
                 case 6:
-                    data["qv"][r]["value"] = field;
+                    data["qv"][r]["value"] = stof(field);
                     break;
                 case 7:
                     data["qv"][r]["units"] = field;

@@ -70,20 +70,30 @@
                 </div>
             </section>
         </div>
+
+        <div class="row">
+            <HartVarChart :log-data="logData.pv" title="PV"></HartVarChart>
+            <HartVarChart :log-data="logData.sv" title="SV"></HartVarChart>
+            <HartVarChart :log-data="logData.tv" title="TV"></HartVarChart>
+            <HartVarChart :log-data="logData.qv" title="QV"></HartVarChart>
+        </div>
     </div>
 </template>
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
-import { HartDeviceDto, verboseHartDeviceAttrs, hart_command_brief, hart_command_response } from '../types/hart-device'
+import { HartDeviceDto, verboseHartDeviceAttrs, hart_command_brief, hart_command_response, hart_device_vars_log } from '../types/hart-device'
 import { HartVars } from '../types/hart-vars'
-import { hartServerUrl } from '../types'
+import { hartServerUrl, updateInterval } from '../types'
 // @ts-ignore
 import VueJsonPretty from 'vue-json-pretty'
+import HartVarChart from '../components/HartVarChart.vue'
+import { ChartData } from 'chart.js'
 
 @Component({
     components: {
-        VueJsonPretty
+        VueJsonPretty,
+        HartVarChart
     }
 })
 export default class HartDeviceComponent extends Vue {
@@ -91,6 +101,13 @@ export default class HartDeviceComponent extends Vue {
     public supportedCommands: hart_command_brief[] = []
     public cmdResponse: hart_command_response | null = null
     public hartAttrs = verboseHartDeviceAttrs
+    public logData: hart_device_vars_log = {
+        pv: [],
+        sv: [],
+        tv: [],
+        qv: []
+    }
+    private logPollInterval: number = 0
 
     mounted() {
         // load supported HART commands
@@ -98,6 +115,9 @@ export default class HartDeviceComponent extends Vue {
             const data = res.data as hart_command_brief[]
             this.supportedCommands = data
         })
+
+        this.refreshChartsData()
+        this.logPollInterval = setInterval(this.refreshChartsData, updateInterval)
     }
 
     get vars(): HartVars | undefined {
@@ -108,6 +128,12 @@ export default class HartDeviceComponent extends Vue {
         this.$http.get(hartServerUrl + '/gw/' + this.$route.params.serialNo + '/subdevice/' + this.device.ioCard + '/' + this.device.channel + '/cmd/' + cmd.number).then(res => {
             const data = res.data as hart_command_response
             this.cmdResponse = data
+        })
+    }
+
+    private refreshChartsData() {
+        this.$http.get(hartServerUrl + '/gw/' + this.$route.params.serialNo + '/log/' + this.device.ioCard + '/' + this.device.channel).then(res => {
+            this.logData = res.data as hart_device_vars_log
         })
     }
 }
