@@ -18,6 +18,10 @@ using std::setw;
 using std::string;
 using nlohmann::json;
 
+struct uint24_t {
+    unsigned int data: 24;
+};
+
 struct hart_ip_hdr_t { // 8 bytes total
     uint8_t version;   //0
     uint8_t msgType;   //1

@@ -284,8 +284,10 @@ void HartMux::sendSubDeviceCmd(unsigned char cmd, HartDevice dev, uint8_t *reqDa
     }
 
     hart_pdu_frame f2 = deserializeHartPduFrame(&f.data[4]); // 4 is start of inner PDU frame
+    #ifdef DEBUG
     printf("inner PDU frame:\tcmd: %i\tbyteCnt: %i\taddr: ", f2.cmd, f2.byteCnt); printBytes(f2.addr, sizeof(f2.addr));
     printf("\t data: \n"); printBytes(&f2.data[2], f2.byteCnt-2);
+    #endif
     
     status = response.header.status;
     resDataCnt = f2.byteCnt-2;
@@ -476,12 +478,12 @@ json parseResponseBytes(uint8_t *bytes, string format, int count) {
     // printf("parseResponseBytes(format: %s, count: %i, bytes: ", format.c_str(), count); printBytes(bytes, count);
     json val;
     if (format.compare("float") == 0) {
-        float f;
-        memcpy(&f, bytes, 4);
+        float f = fromBytes<float>(bytes);
         val = f;
     } else if (format.compare("unsigned-24") == 0) {
         unsigned int i;
-        memcpy(&i+1, bytes, 3);
+        uint24_t u = fromBytes<uint24_t>(bytes);
+        memcpy(&i+1, &u, 3);
         val = i;
     } else if (format.compare("bits") == 0) {
         json bitArray = json::array();
