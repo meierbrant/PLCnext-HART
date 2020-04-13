@@ -22,8 +22,8 @@ import { ChartData, ChartOptions, ChartDataSets, ChartPoint } from 'chart.js'
     }
 })
 export default class LineGraph extends Vue {
-    @Prop() logData: hart_log_var[] = []
-    @Prop() title: string = ""
+    @Prop() logData!: hart_log_var[]
+    @Prop() title!: string
     public options: ChartOptions = {
       legend: {
         display: false

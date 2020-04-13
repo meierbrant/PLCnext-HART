@@ -275,6 +275,7 @@ json HartMux::getLogData(string dir, int ioCard, int channel) {
     };
     string path = dir+'/'+to_string(ioCard)+'/'+to_string(channel);
     std::ifstream f(path+"/vars.log.csv");
+    if (!f) return data;
     CsvParser parser(f);
 
     int r = 0;

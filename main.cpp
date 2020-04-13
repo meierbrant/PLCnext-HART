@@ -57,6 +57,7 @@ json with_gw_data_or_error(Request req, Response &res, json (*gwDataHandler)(Req
 
 int main(int argc, char *argv[]) {
     // load supported HART commands
+    cout << "loading supported HART commands" << endl;
     for (int cmd=0; cmd<50; cmd++) {
         json cmdDef;
         string configFile = UNIVERSAL_CMD_DEF_DIR + "/" + std::to_string(cmd) + ".json";
@@ -71,10 +72,10 @@ int main(int argc, char *argv[]) {
     }
 
     // periodically log the HART Gateway's subdevice variables
+    cout << "starting logger" << endl;
     gatewaysCache = discoverGWs(BCAST_ADDR);
     thread loggingThread([&]() {
         while (true) {
-            sleep(60);
             for (int i=0; i<gatewaysCache.size(); i++) {
                 HartMux hart_mux(gatewaysCache[i]["ip"]);
                 hart_mux.initSession();
@@ -84,6 +85,7 @@ int main(int argc, char *argv[]) {
                 hart_mux.logVars("data/"+sn);
                 hart_mux.closeSession();
             }
+            sleep(60);
         }
     });
     loggingThread.detach();
