@@ -6,12 +6,17 @@
 #include "nlohmann/json.hpp"
 #include <string.h>
 #include <fstream>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <ctime>
 
 // #define DEBUG
 
 using nlohmann::json;
 using std::to_string;
+using std::ifstream;
+using std::ofstream;
 using aria::csv::CsvParser;
 
 const string CMD_DEFINITIONS_DIR = "cmd-definitions";
@@ -239,46 +244,71 @@ hart_var_set HartMux::getSubDeviceVars(HartDevice dev) {
 }
 
 void HartMux::logVars(string dir) {
+    // append the current values to the file
     int n = ioCapabilities.numConnectedDevices - 1;
     for (int i=0; i<n; i++) {
-        string path = dir+'/'+to_string(devices[i].ioCard)+'/'+to_string(devices[i].channel);
+        string path = dir+'/'+to_string(devices[i].ioCard)+'/'+to_string(devices[i].channel)+'/';
         string mkdir = "mkdir -p " + path;
+        string logFile1 = "vars.log.1";
+        string logFile2 = "vars.log.2";
+        string activeLogFile = path + "vars.log";
         system(mkdir.c_str());
         hart_var_set vars = readSubDeviceVars(devices[i]);
-        std::ofstream logfile;
-        // cout << "logging vars at " << path << endl;
-        logfile.open(path+"/vars.log.csv", std::ios_base::app);
+
+        // ensure fs setup
+        ifstream l1r(path+logFile1);
+        if (!l1r.is_open()) ofstream l1w(path+logFile1);
+        ifstream l2r(path+logFile2);
+        if (!l2r) ofstream l2w(path+logFile2);
+        struct stat lstatus;
+        if (lstat(activeLogFile.c_str(), &lstatus) < 0) {
+            symlink(logFile1.c_str(), activeLogFile.c_str());
+        }
+
+        // read the file size
+        struct stat fstatus;
+        stat(activeLogFile.c_str(), &fstatus);
+
+        int lineSizeEstimate = (8+1+5)*4 + 24;
+        int remainingSpace = maxLogfileSize - fstatus.st_size;
+
+        if (remainingSpace < lineSizeEstimate) { // rotate the symlink to the older log file & erase
+            string nextlog = logFile1;
+            if (string(realpath(activeLogFile.c_str(),NULL)).compare(realpath(string(path+logFile1).c_str(),NULL)) == 0) nextlog = logFile2;
+            remove(activeLogFile.c_str());
+            symlink(nextlog.c_str(), activeLogFile.c_str());
+            ofstream f(realpath(activeLogFile.c_str(),NULL));
+            f.close(); // close having written an empty file
+        }
+
+        // append the new vars
+        ofstream log(realpath(activeLogFile.c_str(),NULL), std::ios::app);
         
-        logfile << vars.pv.value << ',';
-        logfile << vars.pv.units << ',';
+        log << vars.pv.value << ',';
+        log << vars.pv.units << ',';
 
-        logfile << vars.sv.value << ',';
-        logfile << vars.sv.units << ',';
+        log << vars.sv.value << ',';
+        log << vars.sv.units << ',';
 
-        logfile << vars.tv.value << ',';
-        logfile << vars.tv.units << ',';
+        log << vars.tv.value << ',';
+        log << vars.tv.units << ',';
 
-        logfile << vars.qv.value << ',';
-        logfile << vars.qv.units << ',';
+        log << vars.qv.value << ',';
+        log << vars.qv.units << ',';
 
         time_t now = time(0);
-        logfile << ctime(&now);
+        log << ctime(&now);
+        // log << '\n';
+        log.close();
     }
 }
 
-json HartMux::getLogData(string dir, int ioCard, int channel) {
-    json data = {
-        {"pv", json::array()},
-        {"sv", json::array()},
-        {"tv", json::array()},
-        {"qv", json::array()}
-    };
-    string path = dir+'/'+to_string(ioCard)+'/'+to_string(channel);
-    std::ifstream f(path+"/vars.log.csv");
-    if (!f) return data;
-    CsvParser parser(f);
+json parseVarLogfile(string filepath, json data, size_t offset=0) {
+    ifstream file(filepath);
+    if (!file) return data;
+    CsvParser parser(file);
 
-    int r = 0;
+    int r = offset;
     int c = 0;
     for (auto& row : parser) {
         for (auto& field : row) {
@@ -318,6 +348,24 @@ json HartMux::getLogData(string dir, int ioCard, int channel) {
         r++;
     }
 
+    return data;
+}
+
+json HartMux::getLogData(string dir, int ioCard, int channel) {
+    string path = dir+'/'+to_string(ioCard)+'/'+to_string(channel)+'/';
+    string logFile1path = path+"vars.log.1";
+    string logFile2path = path+"vars.log.2";
+    
+    json data = {
+        {"pv", json::array()},
+        {"sv", json::array()},
+        {"tv", json::array()},
+        {"qv", json::array()}
+    };
+
+    data = parseVarLogfile(logFile1path, data);
+    data = parseVarLogfile(logFile2path, data, data["pv"].size());
+    
     return data;
 }
 

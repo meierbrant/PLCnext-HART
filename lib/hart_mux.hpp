@@ -25,8 +25,9 @@ class HartMux : public HartDevice {
     hart_io_capabilities ioCapabilities;
     bool stopAutodiscovery;
     HartDevice devices[32];
+    int maxLogfileSize; // default is 6MB, which is roughly one line per minute for 1 day
 
-    HartMux(string ip) : sock(ip, "5094"), ipAddress(ip), inactivityTimeout(5000) {};
+    HartMux(string ip) : sock(ip, "5094"), ipAddress(ip), inactivityTimeout(5000), maxLogfileSize(6000000) {};
     int initSession();
     int closeSession();
     uint8_t* getUniqueAddr(); // cmd 0
