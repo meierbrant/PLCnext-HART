@@ -1,6 +1,11 @@
 <template>
     <div class="hart-device">
         <div class="row">
+            <b-alert class="alert" show variant="warning" v-for="status in device.extendedDeviceStatus" v-bind:key="status.name">
+                <b>{{ status.name }}</b> {{ status.description }}
+            </b-alert>
+        </div>
+        <div class="row">
             <div class="col-md-6"> <!-- left column -->
                 <div class="row">
                     <section class="">
@@ -140,5 +145,7 @@ export default class HartDeviceComponent extends Vue {
 </script>
 
 <style scoped>
-  
+  .alert {
+      margin-top: 1em;
+  }
 </style>

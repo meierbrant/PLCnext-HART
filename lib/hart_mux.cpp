@@ -90,9 +90,11 @@ uint8_t* HartMux::getUniqueAddr() { // cmd 0 by short address for gateway
     // temporarily send cmd 0 again to regain that info.
     sendCmd(0, (uint8_t)0);
 
-    addrUniq[0] = response.body[7];
-    addrUniq[1] = response.body[8];
-    memcpy(&addrUniq[2], &response.body[15], 3);
+    addrUniq[0] = response.body[6+1];
+    addrUniq[1] = response.body[6+2];
+    memcpy(&addrUniq[2], &response.body[6+9], 3);
+
+    extendedDeviceStatusBits = response.body[6+16];
 
     #ifdef DEBUG
     cout << "addrUniq = ";
@@ -111,7 +113,7 @@ void HartMux::readIOSystemCapabilities() { // cmd 74
     ioCapabilities.maxIoCards = response.body[10];
     ioCapabilities.maxChannels = response.body[11];
     ioCapabilities.subDevicesPerCh = response.body[12];
-    ioCapabilities.numConnectedDevices = (response.body[13] << 8) | response.body[14];
+    ioCapabilities.numConnectedDevices = ((response.body[13] << 8) | response.body[14]) - 1; // exclude itself
     ioCapabilities.numDelayedResp = response.body[15];
     ioCapabilities.masterMode = response.body[16];
     ioCapabilities.retryCnt = response.body[17];
@@ -145,30 +147,25 @@ HartDevice HartMux::readSubDeviceSummary(uint16_t index) {
     d.revision = response.body[pduHdrSize+44];
     d.profile = response.body[pduHdrSize+45];
     d.pvtLabelDistCode = (response.body[pduHdrSize+46] << 8) | response.body[pduHdrSize+47];
+
+    uint8_t buf[512];
+    size_t count;
+    uint8_t status;
+    sendSubDeviceCmd(0, d, nullptr, 0, buf, count, status);
+    d.extendedDeviceStatusBits = buf[16];
+
     return d;
 }
 
 void HartMux::autodiscoverSubDevices() {
     readIOSystemCapabilities();
-    // zeroth device is itself
     for (int i=0; i<ioCapabilities.numConnectedDevices; i++) {
         devices[i] = readSubDeviceSummary(i+1);
     }
 }
 
-void HartMux::beginSubDeviceAutodiscovery(int seconds) {
-    stopAutodiscovery = false;
-    // thread autodiscoveryThread (autodiscoverLoop, this, seconds);
-}
-
-void HartMux::stopSubDeviceAutodiscovery() {
-    stopAutodiscovery = true;
-}
-
-
 void HartMux::listDevices() {
-    // zeroth device is itself
-    int n = ioCapabilities.numConnectedDevices - 1;
+    int n = ioCapabilities.numConnectedDevices;
     cout << "HART MUX has (" << n << ") devices connected:" << endl;
     for (int i=0; i<n; i++) {
         devices[i].print();
@@ -235,8 +232,7 @@ string getLastLineOfFile(string filepath) {
 hart_var_set HartMux::getSubDeviceVars(HartDevice dev) {
     // cout << "getSubDeviceVars()" << endl;
 
-    // zeroth device is itself
-    int n = ioCapabilities.numConnectedDevices - 1;
+    int n = ioCapabilities.numConnectedDevices;
     cout << "n: " << n << endl;
     for (int i=0; i<n; i++) {
         hart_var_set vars = readSubDeviceVars(devices[i]);
@@ -245,7 +241,7 @@ hart_var_set HartMux::getSubDeviceVars(HartDevice dev) {
 
 void HartMux::logVars(string dir) {
     // append the current values to the file
-    int n = ioCapabilities.numConnectedDevices - 1;
+    int n = ioCapabilities.numConnectedDevices;
     for (int i=0; i<n; i++) {
         string path = dir+'/'+to_string(devices[i].ioCard)+'/'+to_string(devices[i].channel)+'/';
         string mkdir = "mkdir -p " + path;
@@ -298,7 +294,6 @@ void HartMux::logVars(string dir) {
 
         time_t now = time(0);
         log << ctime(&now);
-        // log << '\n';
         log.close();
     }
 }
@@ -456,6 +451,7 @@ void HartMux::sendSubDeviceCmd(unsigned char cmd, HartDevice dev, uint8_t *reqDa
 
     hart_pdu_frame f2 = deserializeHartPduFrame(&f.data[4]); // 4 is start of inner PDU frame
     #ifdef DEBUG
+    printf("longTag: %s\n", dev.longTag.c_str());
     printf("inner PDU frame:\tcmd: %i\tbyteCnt: %i\taddr: ", f2.cmd, f2.byteCnt); printBytes(f2.addr, sizeof(f2.addr));
     printf("\t data: \n"); printBytes(&f2.data[2], f2.byteCnt-2);
     #endif
@@ -585,8 +581,7 @@ json HartMux::to_json() {
 
     data["ipAddress"] = ipAddress;
     data["devices"] = json::array();
-    // zeroth device is itself
-    int n = ioCapabilities.numConnectedDevices - 1;
+    int n = ioCapabilities.numConnectedDevices;
     for (int i=0; i<n; i++) {
         data["devices"][i] = devices[i].to_json();
     }

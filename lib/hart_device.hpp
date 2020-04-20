@@ -23,6 +23,7 @@ struct hart_var_set {
 string getUnitsFromCode(uint8_t code);
 hart_var_set deserializeHartVarSet(uint8_t *bytes, size_t bCnt);
 void displayVars(hart_var_set vars);
+json extendedDeviceStatusBitsToJson(uint8_t bits);
 
 class HartDevice {
 public:
@@ -41,6 +42,7 @@ public:
     // should be practically infinite
     string name = "unknown";
     string company = "unknown";
+    uint8_t extendedDeviceStatusBits;
     
     HartDevice();
     HartDevice(uint16_t deviceTypeCode);

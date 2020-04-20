@@ -22,7 +22,8 @@ const blankDevice: HartDeviceDto = {
   profile: 0,
   revision: 0,
   ioCard: 0,
-  channel: 0
+  channel: 0,
+  extendedDeviceStatus: []
 }
 
 @Component({

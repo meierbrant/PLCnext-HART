@@ -13,6 +13,7 @@ export interface HartDeviceDto {
     revision: number
     ioCard: number
     channel: number
+    extendedDeviceStatus: hart_extended_device_status_info[]
     vars?: HartVars
 }
 
@@ -37,6 +38,7 @@ export class HartDevice implements HartDeviceDto {
     revision: number
     ioCard: number
     channel: number
+    extendedDeviceStatus: hart_extended_device_status_info[]
     _vars?: HartVars
 
     constructor(data: HartDeviceDto) {
@@ -50,6 +52,7 @@ export class HartDevice implements HartDeviceDto {
         this.revision = data.revision
         this.ioCard = data.ioCard
         this.channel = data.channel
+        this.extendedDeviceStatus = data.extendedDeviceStatus
         this._vars = data.vars
     }
 
@@ -83,6 +86,12 @@ export class HartDevice implements HartDeviceDto {
             return this._vars
         }
     }
+}
+
+export type hart_extended_device_status_info = {
+    name: string,
+    description: string,
+    condensedStatus: boolean
 }
 
 export type hart_command_brief = {

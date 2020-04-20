@@ -34,8 +34,6 @@ class HartMux : public HartDevice {
     void readIOSystemCapabilities(); // cmd 74
     HartDevice readSubDeviceSummary(uint16_t index); // cmd 84
     void autodiscoverSubDevices();
-    void beginSubDeviceAutodiscovery(int seconds);
-    void stopSubDeviceAutodiscovery();
     void listDevices();
     hart_var_set readSubDeviceVars(HartDevice dev);
     hart_var_set getSubDeviceVars(HartDevice dev);

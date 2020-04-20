@@ -69,6 +69,7 @@ void HartDevice::print() {
     // cout << "\tdevice revision: " << (uint32_t)revision << endl;
     // cout << "\tdevice profile: " << (uint32_t)profile << endl;
     // cout << "\tprivate label distributor code: " << hex << (uint32_t)pvtLabelDistCode << dec << endl;
+    cout << "\textended device status bits: "; printBytes(extendedDeviceStatusBits);
 }
 
 hart_var_set deserializeHartVarSet(uint8_t *bytes, size_t bCnt) {
@@ -140,6 +141,49 @@ void displayVars(hart_var_set vars) {
     cout << "\tqv: " << vars.qv.value << vars.qv.units << endl;
 }
 
+json extendedDeviceStatusBitsToJson(uint8_t bits) {
+    json data = json::array();
+    if (!!(bits & 0x01)) {
+        data[data.size()] = {
+            {"name", "Maintenance Required"},
+            {"description", "This bit is set to indicate that, while the device has not malfunctioned, the Field Device requires maintenance. Devices supporting this bit should support the Condensed Status Commands (see Common Practice Command Specification)."},
+            {"condensedStatus", true}
+        };
+    } else if (!!(bits & 0x02)) {
+        data[data.size()] = {
+            {"name", "Device Variable Alert"},
+            {"description", "This bit is set if any Device Variable is in an Alarm or Warning State. The host should identify the Device Variable(s) causing this to be set using the Device Variable Status indicators."},
+            {"condensedStatus", false}
+        };
+    } else if (!!(bits & 0x04)) {
+        data[data.size()] = {
+            {"name", "Critical Power Failure"},
+            {"description", "For devices that can operate from stored power. This bit is set when that power is becoming critically low. For example, a device scavenging power loosing that power source would set this bit. Devices must be able to sustain their network connection for at least 15 minutes from the when this bit is set. A device may begin gracefully disconnecting from the network if its power level drops too low."},
+            {"condensedStatus", false}
+        };
+    } else if (!!(bits & 0x08)) {
+        data[data.size()] = {
+            {"name", "Failure"},
+            {"description", "When this bit is set one or more Device Variables (i.e., measurement or control values) are invalid due to a malfunction in the field device or its peripherals. Devices supporting this bit must support the Condensed Status Commands (see Common Practice Command Specification)."},
+            {"condensedStatus", true}
+        };
+    } else if (!!(bits & 0x10)) {
+        data[data.size()] = {
+            {"name", "Out of Specification"},
+            {"description", "When set, this bit indicates deviations from the permissible ambient or process conditions have been detected that may compromise measurement or control accuracy (i.e., device performance may be degraded given current operating conditions). Devices supporting this bit must support the Condensed Status Commands (see Common Practice Command Specification)."},
+            {"condensedStatus", true}
+        };
+    } else if (!!(bits & 0x20)) {
+        data[data.size()] = {
+            {"name", "Function Check"},
+            {"description", "This bit is set if one or more Device Variables are temporarily invalid (e.g. frozen) due to ongoing work on the device. Devices supporting this bit must support the Condensed Status Commands (see Common Practice Command Specification)."},
+            {"condensedStatus", true}
+        };
+    }
+
+    return data;
+}
+
 json HartDevice::to_json() {
     json data = {
         {"name", name},
@@ -151,7 +195,8 @@ json HartDevice::to_json() {
         {"profile", profile},
         {"privateLabelDistCode", pvtLabelDistCode},
         {"ioCard", ioCard},
-        {"channel", channel}
+        {"channel", channel},
+        {"extendedDeviceStatus", extendedDeviceStatusBitsToJson(extendedDeviceStatusBits)}
     };
 
     return data;
