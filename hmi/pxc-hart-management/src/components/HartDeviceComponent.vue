@@ -1,47 +1,27 @@
 <template>
     <div class="hart-device">
         <div class="row">
-            <b-alert class="alert" show variant="warning" v-for="status in device.extendedDeviceStatus" v-bind:key="status.name">
+            <b-alert class="mt-3" show variant="warning" v-for="status in device.extendedDeviceStatus" v-bind:key="status.name">
                 <b>{{ status.name }}</b> {{ status.description }}
             </b-alert>
         </div>
-        <div class="row">
-            <div class="col-md-6"> <!-- left column -->
-                <div class="row">
-                    <section class="">
-                        <h2>Device Summary</h2>
-                        <div class="row">
-                            <div class="col-md-4 col-sm-12">
-                                <img src="../assets/img/dummy-device.jpg" class="img-fluid"/>
-                            </div>
-                            <div class="col-md-8">
-                                <table>
-                                    <tr v-for="(attr, key) in hartAttrs" v-bind:key="key">
-                                        <th style="text-align: right; padding-right: 0.5em;">{{ attr }}</th>
-                                        <td style="text-align: left; padding-right: 0.5em;">{{ device[key] }}</td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-            </div>
-            <div class="col-md-6"> <!-- right column-->
-                <section class="var-grid">
-                    <h2>Vars</h2>
-                    <div class="row">
-                        <div class="col-sm-6" v-for="(v, key) in vars" v-bind:key="key">
-                            <b-card :title="key" class="var-card">
-                                <div class="value text-secondary">
-                                    <!-- FIXME: if there's no var, this shouldn't get run -->
-                                    {{ v.value ? v.value.toFixed(2) : '' }}<span class="units text-dark">{{ v.units ? v.units : '' }}</span>
-                                </div>
-                            </b-card>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </div>
+        <b-card-group deck class="mt-3">
+            <b-card header="Basic Info" class="text-center text-dark">
+                <table>
+                    <tr v-for="(attr, key) in hartAttrs" v-bind:key="key">
+                        <th style="text-align: right; padding-right: 0.5em;">{{ attr }}</th>
+                        <td style="text-align: left; padding-right: 0.5em;" class="text-primary">{{ device[key] }}</td>
+                    </tr>
+                </table>
+            </b-card>
+            <HartVarChart :log-data="logData.pv" title="PV"></HartVarChart>
+        </b-card-group>
+
+        <b-card-group deck class="mt-3">
+            <HartVarChart :log-data="logData.sv" title="SV" size="small"></HartVarChart>
+            <HartVarChart :log-data="logData.tv" title="TV" size="small"></HartVarChart>
+            <HartVarChart :log-data="logData.qv" title="QV" size="small"></HartVarChart>
+        </b-card-group>
 
         <div class="row">
             <section class="">
@@ -74,13 +54,6 @@
                     </div>
                 </div>
             </section>
-        </div>
-
-        <div class="row">
-            <HartVarChart :log-data="logData.pv" title="PV"></HartVarChart>
-            <HartVarChart :log-data="logData.sv" title="SV"></HartVarChart>
-            <HartVarChart :log-data="logData.tv" title="TV"></HartVarChart>
-            <HartVarChart :log-data="logData.qv" title="QV"></HartVarChart>
         </div>
     </div>
 </template>
@@ -145,7 +118,4 @@ export default class HartDeviceComponent extends Vue {
 </script>
 
 <style scoped>
-  .alert {
-      margin-top: 1em;
-  }
 </style>

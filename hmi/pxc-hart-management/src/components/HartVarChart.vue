@@ -1,9 +1,9 @@
 <template>
-  <b-card class="small" :sub-title="title">
-    <div class="value">
-        <b>{{ currentValue }}<span class="units text-dark">{{ units }}</span></b>
+  <b-card :class="size">
+    <div class="">
+        <span class="text-dark title">{{ title }}</span> <b class="value text-primary">{{ currentValue }}<span class="units text-dark">{{ units }}</span></b>
     </div>
-    <line-chart :chart-data="chartData" :options="options"></line-chart>
+    <line-chart :chart-data="chartData" :options="options" class="chart"></line-chart>
   </b-card>
 </template>
 
@@ -24,14 +24,29 @@ import { ChartData, ChartOptions, ChartDataSets, ChartPoint } from 'chart.js'
 export default class LineGraph extends Vue {
     @Prop() logData!: hart_log_var[]
     @Prop() title!: string
+    @Prop({default: "large"}) size!: "large" | "small"
+    public yStepSize?: number
     public options: ChartOptions = {
       legend: {
         display: false
+      },
+      maintainAspectRatio: false,
+      scales: {
+        yAxes: [{
+          ticks: {
+            maxTicksLimit: this.yTicksLimit
+          }
+        }],
+        xAxes: [{
+          ticks: {
+            maxTicksLimit: this.xTicksLimit
+          }
+        }]
       }
     }
 
     mounted () {
-
+    
     }
 
     get currentValue() {
@@ -42,16 +57,34 @@ export default class LineGraph extends Vue {
       return this.logData.length > 0 ? this.logData[this.logData.length-1].units : ""
     }
 
+    get xTicksLimit(): number {
+      switch(this.size) {
+        case "small":
+          return 5
+        default:
+          return 10
+      }
+    }
+
+    get yTicksLimit(): number {
+      switch(this.size) {
+        case "small":
+          return 4
+        default:
+          return 6
+      }
+    }
+
     get chartData(): ChartData {
       let labels: string[] = []
       let chartPoints: ChartPoint[] = []
       let dataset: ChartDataSets = {
         label: this.title,
         data: [],
-        pointBackgroundColor: "#393",
-        backgroundColor: "#afa"
+        pointBackgroundColor: "#96be0d",
+        backgroundColor: "rgba(0,0,0,0)",
+        borderColor: "#96be0d"
       }
-
 
       let start = 0
       let count = this.logData.length
@@ -82,8 +115,9 @@ export default class LineGraph extends Vue {
 </script>
 
 <style>
-  .small {
-    max-width: 600px;
+  .title {
+    font-size: 1.5em;
+    margin-right: 0.5em;
   }
 
   .value {
@@ -93,5 +127,13 @@ export default class LineGraph extends Vue {
 
   .units {
     font-size: 0.7em;
+  }
+
+  .large .chart {
+    max-height: 15em;
+  }
+
+  .small .chart {
+    max-height: 10em;
   }
 </style>
