@@ -1,18 +1,24 @@
 <template>
   <div id="app">
-    <NavBar/>
-    <router-view/>
+    <MobileNavBar/>
+    <div class="d-flex">
+      <div class="d-lg-block d-none" style="min-width: 16rem; height: 1px;"></div>
+      <DesktopNavBar style="width: 16rem;"/>
+      <router-view style="flex: 1"/>
+    </div>
   </div>
 </template>
 
 <script>
 // @ is an alias to /src
-import NavBar from '@/components/NavBar.vue'
+import DesktopNavBar from '@/components/DesktopNavBar.vue'
+import MobileNavBar from '@/components/MobileNavBar.vue'
 
 export default {
   name: 'app',
   components: {
-    NavBar
+    DesktopNavBar,
+    MobileNavBar
   }
 }
 </script>

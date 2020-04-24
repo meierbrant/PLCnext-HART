@@ -24,8 +24,19 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  min-height: 100%;
+}
 
 main {
+  display: flex;
+  flex: 1;
+  flex-flow: column;
+  align-items: center;
   max-width: 800px;
   margin: 2em auto;
 }

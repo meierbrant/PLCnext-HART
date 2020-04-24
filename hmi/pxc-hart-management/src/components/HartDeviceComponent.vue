@@ -5,6 +5,7 @@
                 <b>{{ status.name }}</b> {{ status.description }}
             </b-alert>
         </div>
+        <h1 class="text-center">{{ device.longTag }}</h1>
         <b-card-group deck class="mt-3">
             <b-card header="Basic Info" class="text-center text-dark">
                 <table>
@@ -118,4 +119,7 @@ export default class HartDeviceComponent extends Vue {
 </script>
 
 <style scoped>
+h1 {
+    margin: 2rem auto;
+}
 </style>

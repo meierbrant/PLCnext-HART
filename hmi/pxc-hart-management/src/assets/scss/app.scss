@@ -1,10 +1,4 @@
-$theme-colors: (
-  "primary": #96be0d, // PxC green
-  "secondary": #0099a1 // PxC blue
-);
-
-$grey: #aec8d2;
-
+@import '_vars.scss';
 @import 'node_modules/bootstrap/scss/bootstrap';
 @import 'node_modules/bootstrap-vue/src/index.scss';
 
