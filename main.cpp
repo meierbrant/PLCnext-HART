@@ -98,19 +98,34 @@ int main(int argc, char *argv[]) {
     Server s;
     s.Get("/", [](const Request& req, Response& res) {
         res.set_header("Access-Control-Allow-Origin", "*");
-        res.set_content("This is the beginnings of a HART MUX web API!\n\n\
-        Routes:\n\
-        GET\t/\t\t\t\t\twelcome page\n\
-        GET\t/gw/discover\t\t\t\tdiscover all gateways on the network\n\
-        GET\t/gw/{serialNo}/info\t\t\tHART MUX info (including connected devices)\n\
-        GET\t/gw/{serialNo}/info/{card}/{ch}\t\tread device info\n\
-        GET\t/gw/{serialNo}/vars\t\t\tget list of all devices w/ their vars\n\
-        GET\t/gw/{serialNo}/vars/{ioCard}\t\tget list of all devices on this io card w/ their vars\n\
-        GET\t/gw/{serialNo}/vars/{card}/{ch}\t\tread vars from device\n\
-        GET\t/gw/{serialNo}/subdevice/{ioCard}/{channel}/cmd/{cmd}\n", "text/plain");
+        res.set_content("\
+        <style>\
+        table tr:nth-child(even) {\
+            background-color: #eee;\
+        }\
+        table tr:nth-child(odd) {\
+            background-color: #fff;\
+        }\
+        </style>\
+        \
+        <p>This is the beginnings of a HART MUX web API!</p>\
+        <table border>\
+        <tr><th>Method</th><th>Route</th><th>Description</th></tr>\
+        <tr><td>GET</td><td>/</td><td>welcome page</td></tr>\
+        <tr><td>GET</td><td>/gw/discover</td><td>discover all gateways on the network</td></tr>\
+        <tr><td>GET</td><td>/gw/{serialNo}/info</td><td>HART MUX info (including connected devices)</td></tr>\
+        <tr><td>GET</td><td>/gw/{serialNo}/info/{card}/{ch}</td><td>read device info</td></tr>\
+        <tr><td>GET</td><td>/gw/{serialNo}/vars</td><td>get list of all devices w/ their vars</td></tr>\
+        <tr><td>GET</td><td>/gw/{serialNo}/vars/{ioCard}</td><td>get list of all devices on this io card w/ their vars</td></tr>\
+        <tr><td>GET</td><td>/gw/{serialNo}/vars/{card}/{ch}</td><td>read vars from device</td></tr>\
+        <tr><td>GET</td><td>/gw/{serialNo}/log/{ioCard}/{channel}</td><td>get the logged vars (pv, sv, tv, qv) for this device</td></tr>\
+        <tr><td>GET</td><td>/gw/{serialNo}/subdevice/{ioCard}/{channel}/cmd/{cmd}</td><td>send a command to this device</td></tr>\
+        <tr><td>GET</td><td>/gw/{serialNo}/subdevice/{ioCard}/{channel}/commands</td><td>get a list of all supported commands for this device</td></tr>\
+        </table>", "text/html");
     });
 
     s.Get("/gw/discover", [](const Request& req, Response& res) {
+        // cout << "GET /gw/discover" << endl;
         json gwData = discoverGWs(BCAST_ADDR);
         res.set_header("Access-Control-Allow-Origin", "*");
         res.set_content(gwData.dump(), "text/json");
@@ -118,6 +133,7 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/info
     s.Get(R"(/gw/(\d+)/info)", [](const Request& req, Response& res) {        
+        // cout << "GET /gw/{serialNo}/info" << endl;
         json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
             HartMux hart_mux(gwData["ip"]);
             hart_mux.initSession();
@@ -133,6 +149,7 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/info/{ioCard}/{channel}
     s.Get(R"(/gw/(\d+)/info/(\d+)/(\d+))", [](const Request& req, Response& res) {      
+        // cout << "GET /gw/{serialNo}/info/{ioCard}/{channel}" << endl;
         json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
             string ioCard(req.matches[2]);
             string channel(req.matches[3]);
@@ -156,6 +173,7 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/vars
     s.Get(R"(/gw/(\d+)/vars)", [](const Request& req, Response& res) {
+        // cout << "GET /gw/{serialNo}/vars" << endl;
         json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
             HartMux hart_mux(gwData["ip"]);
             hart_mux.initSession();
@@ -188,6 +206,7 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/vars/{ioCard}
     s.Get(R"(/gw/(\d+)/vars/(\d+))", [](const Request& req, Response& res) {
+        // cout << "GET /gw/{serialNo}/vars/{ioCard}" << endl;
         json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
             string ioCard(req.matches[2]);
 
@@ -225,6 +244,7 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/vars/{ioCard}/{channel}
     s.Get(R"(/gw/(\d+)/vars/(\d+)/(\d+))", [](const Request& req, Response& res) {
+        // cout << "GET /gw/{serialNo}/vars/{ioCard}/{channel}" << endl;
         json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
             string ioCard(req.matches[2]);
             string channel(req.matches[3]);
@@ -249,6 +269,7 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/log/{ioCard}/{channel}
     s.Get(R"(/gw/(\d+)/log/(\d+)/(\d+))", [](const Request& req, Response& res) {
+        // cout << "GET /gw/{serialNo}/log/{ioCard}/{channel}" << endl;
         json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
             string serialNo(req.matches[1]);
             string ioCard(req.matches[2]);
