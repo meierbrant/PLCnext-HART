@@ -4,7 +4,7 @@
     <div class="d-flex">
       <div class="d-lg-block d-none" style="min-width: 16rem; height: 1px;"></div>
       <DesktopNavBar style="width: 16rem;"/>
-      <router-view style="flex: 1"/>
+      <router-view id="page-content" style="flex: 1"/>
     </div>
   </div>
 </template>
@@ -42,6 +42,16 @@ export default {
     &.router-link-exact-active {
       color: #42b983;
     }
+  }
+}
+
+#page-content {
+  padding: 2rem;
+}
+
+@include media-breakpoint-down(xs) {
+  #page-content {
+    padding: 0.5rem;
   }
 }
 </style>

@@ -1,14 +1,12 @@
 <template>
-  <div class="container">
-    <main role="main" class="text-center">
-      <h1 class="cover-heading">Phoenix Contact HART Management System</h1>
-      <p class="lead">Easily view and manage your HART device network.</p>
-      <p class="lead">
-        Detected Hart Gateways:
-        <HartGateways />
-      </p>
-    </main>
-  </div>
+<main role="main" class="text-center">
+  <h1 class="cover-heading">Phoenix Contact HART Management System</h1>
+  <p class="lead">Easily view and manage your HART device network.</p>
+  <p class="lead">
+    Detected Hart Gateways:
+    <HartGateways />
+  </p>
+</main>
 </template>
 
 <script>

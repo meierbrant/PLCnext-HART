@@ -68,7 +68,7 @@
 tr.clickable {
     &:hover {
         cursor: pointer;
-        background-color: map_get($theme-colors, 'primary') !important;
+        background-color: map_get($theme-colors, 'secondary') !important;
     }
 }
 

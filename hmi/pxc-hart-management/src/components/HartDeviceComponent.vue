@@ -1,62 +1,58 @@
 <template>
-    <div class="hart-device">
-        <div class="row">
-            <b-alert class="mt-3" show variant="warning" v-for="status in device.extendedDeviceStatus" v-bind:key="status.name">
-                <b>{{ status.name }}</b> {{ status.description }}
-            </b-alert>
-        </div>
-        <h1 class="text-center">{{ device.longTag }}</h1>
-        <b-card-group deck class="mt-3">
-            <b-card header="Basic Info" class="text-center text-dark">
-                <table>
-                    <tr v-for="(attr, key) in hartAttrs" v-bind:key="key">
-                        <th style="text-align: right; padding-right: 0.5em;">{{ attr }}</th>
-                        <td style="text-align: left; padding-right: 0.5em;" class="text-primary">{{ device[key] }}</td>
-                    </tr>
-                </table>
-            </b-card>
-            <HartVarChart :log-data="logData.pv" title="PV"></HartVarChart>
-        </b-card-group>
-
-        <b-card-group deck class="mt-3">
-            <HartVarChart :log-data="logData.sv" title="SV" size="small"></HartVarChart>
-            <HartVarChart :log-data="logData.tv" title="TV" size="small"></HartVarChart>
-            <HartVarChart :log-data="logData.qv" title="QV" size="small"></HartVarChart>
-        </b-card-group>
-
-        <div class="row">
-            <section class="">
-                <div id="send-cmd">
-                    <div class="input-group mb-3">
-                        <!-- <input type="text" class="form-control" placeholder="command #" aria-label="cmdnum" aria-describedby="basic-addon2"> -->
-                        <b-dropdown id="dropdown-1" :text="'Send a Command'" class="m-md-2">
-                            <b-dropdown-item v-for="cmd in supportedCommands" v-bind:key="cmd.number" v-on:click="sendCmd(cmd);">
-                                {{ cmd.number + ": " + cmd.description }}</b-dropdown-item>
-                        </b-dropdown>
-                        <!-- <div class="input-group-append">
-                            <button class="btn btn-outline-secondary" type="button" v-on:click="sendCmd()">Send</button>
-                        </div> -->
-                    </div>
-                    <div id="cmd-result" v-if="cmdResponse != null">
-                        <h3>Response</h3>
-                        <b-card no-body>
-                            <b-tabs card>
-                            <b-tab title="Table" active>
-                                <b-table striped hover :items="cmdResponse.data"></b-table>
-                            </b-tab>
-                            <b-tab title="JSON">
-                                <vue-json-pretty
-                                    :path="'res'"
-                                    :data="cmdResponse">
-                                </vue-json-pretty>
-                            </b-tab>
-                            </b-tabs>
-                        </b-card>
-                    </div>
-                </div>
-            </section>
-        </div>
+<div class="hart-device">
+    <div class="row">
+        <b-alert class="mb-3" show variant="warning" v-for="status in device.extendedDeviceStatus" v-bind:key="status.name">
+            <b>{{ status.name }}</b> {{ status.description }}
+        </b-alert>
     </div>
+    <h1 class="text-center">{{ device.longTag }}</h1>
+    <b-card-group deck>
+        <b-card header="Basic Info" class="text-center text-dark">
+            <table>
+                <tr v-for="(attr, key) in hartAttrs" v-bind:key="key">
+                    <th style="text-align: right; padding-right: 0.5em;">{{ attr }}</th>
+                    <td style="text-align: left; padding-right: 0.5em;" class="text-primary">{{ device[key] }}</td>
+                </tr>
+            </table>
+        </b-card>
+        <HartVarChart :log-data="logData.pv" title="PV"></HartVarChart>
+    </b-card-group>
+
+    <b-card-group deck class="mt-3">
+        <HartVarChart :log-data="logData.sv" title="SV" size="small"></HartVarChart>
+        <HartVarChart :log-data="logData.tv" title="TV" size="small"></HartVarChart>
+        <HartVarChart :log-data="logData.qv" title="QV" size="small"></HartVarChart>
+    </b-card-group>
+
+    <section id="send-cmd">
+        <div class="input-group mb-3">
+            <!-- <input type="text" class="form-control" placeholder="command #" aria-label="cmdnum" aria-describedby="basic-addon2"> -->
+            <b-dropdown id="dropdown-1" :text="'Send a Command'" class="m-md-2" variant="primary">
+                <b-dropdown-item v-for="cmd in supportedCommands" v-bind:key="cmd.number" v-on:click="sendCmd(cmd);">
+                    {{ cmd.number + ": " + cmd.description }}</b-dropdown-item>
+            </b-dropdown>
+            <!-- <div class="input-group-append">
+                <button class="btn btn-outline-secondary" type="button" v-on:click="sendCmd()">Send</button>
+            </div> -->
+        </div>
+        <div id="cmd-result" v-if="cmdResponse != null">
+            <h3>Response</h3>
+            <b-card no-body>
+                <b-tabs card>
+                <b-tab title="Table" active>
+                    <b-table striped hover :items="cmdResponse.data"></b-table>
+                </b-tab>
+                <b-tab title="JSON">
+                    <vue-json-pretty
+                        :path="'res'"
+                        :data="cmdResponse">
+                    </vue-json-pretty>
+                </b-tab>
+                </b-tabs>
+            </b-card>
+        </div>
+    </section>
+</div>
 </template>
 
 <script lang="ts">
@@ -120,6 +116,6 @@ export default class HartDeviceComponent extends Vue {
 
 <style scoped>
 h1 {
-    margin: 2rem auto;
+    margin: 0 auto 2rem auto;
 }
 </style>

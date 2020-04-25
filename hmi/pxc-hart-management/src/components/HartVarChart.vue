@@ -81,9 +81,9 @@ export default class LineGraph extends Vue {
       let dataset: ChartDataSets = {
         label: this.title,
         data: [],
-        pointBackgroundColor: "#96be0d",
+        pointBackgroundColor: "#0099a1",
         backgroundColor: "rgba(0,0,0,0)",
-        borderColor: "#96be0d"
+        borderColor: "#0099a1"
       }
 
       let start = 0

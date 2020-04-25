@@ -1,7 +1,5 @@
 <template>
-  <div class="container">
-    <HartDeviceComponent :device="device"/>
-  </div>
+  <HartDeviceComponent :device="device"/>
 </template>
 
 <script lang="ts">

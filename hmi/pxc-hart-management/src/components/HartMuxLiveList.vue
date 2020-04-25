@@ -7,9 +7,9 @@
                     <th>Long Tag</th>
                     <th>Name</th>
                     <th>Company</th>
-                    <th>Hart Revision</th>
+                    <th class="d-none d-md-table-cell">Hart Revision</th>
                     <th>PV</th>
-                    <th>SV</th>
+                    <th class="d-none d-md-table-cell">SV</th>
                     <th>Last Update</th>
                 </tr>
             </thead>
@@ -18,10 +18,16 @@
                     <td>{{ dev.longTag }}</td>
                     <td>{{ dev.name }}</td>
                     <td>{{ dev.company }}</td>
-                    <td>{{ dev.cmdRevLvl }}</td>
+                    <td class="d-none d-md-table-cell">{{ dev.cmdRevLvl }}</td>
                     <td>{{ displayVar(dev, 'pv') }}</td>
-                    <td>{{ displayVar(dev, 'sv') }}</td>
-                    <td>{{ dev.vars ? dev.vars.loopCurrent.lastUpdated : '' }}</td>
+                    <td class="d-none d-md-table-cell">{{ displayVar(dev, 'sv') }}</td>
+                    <td>{{ dev.vars ? dev.vars.loopCurrent.lastUpdated.toLocaleTimeString("en-US", {
+                        hour: 'numeric',
+                        minute: 'numeric',
+                        day: 'numeric',
+                        month: 'numeric'
+                        }) : '' }}
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -153,7 +159,7 @@ export default class HartMuxLiveList extends Vue {
 
     public displayVar(dev: HartDeviceDto, variable: hartVarKey): string {
         return (dev.vars && (dev.vars as any)[variable] && (dev.vars as any)[variable]!.value) ?
-            ((dev.vars as any)[variable]!.value.toFixed(2) + " " + (dev.vars as any)[variable]!.units) : ''
+            ((dev.vars as any)[variable]!.value.toFixed(2) + "" + (dev.vars as any)[variable]!.units) : ''
     }
 
     public navigateToDeviceShow(dev: HartDeviceDto) {
@@ -166,3 +172,7 @@ export default class HartMuxLiveList extends Vue {
     }
 }
 </script>
+
+<style lang="scss">
+
+</style>

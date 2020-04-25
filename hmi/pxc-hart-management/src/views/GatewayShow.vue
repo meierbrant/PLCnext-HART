@@ -1,8 +1,8 @@
 <template>
-  <div class="container">
-    <LiveHartMuxGraphic :gwSN=$route.params.serialNo />
-    <HartMuxLiveList :gwSN=$route.params.serialNo />
-  </div>
+<div>
+  <LiveHartMuxGraphic :gwSN=$route.params.serialNo />
+  <HartMuxLiveList :gwSN=$route.params.serialNo style="margin-top: 2rem;"/>
+</div>
 </template>
 
 <script>

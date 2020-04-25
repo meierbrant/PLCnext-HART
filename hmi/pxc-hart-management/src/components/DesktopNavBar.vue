@@ -1,16 +1,16 @@
 <template>
 <b-nav id="sidebar" vertical class="d-lg-block d-none">
     <div class="brand" style="grid-row-start: 1;">
-        <b-link to="/"><img src="../assets/img/pxc_logo_plain.png"></b-link>
+        <b-link to="/"><img src="../assets/img/pxc_logo_white.png"></b-link>
     </div>
     <b-nav-item to="/">
         <div>
-            <img src="../assets/img/hart_mux_outline.png">
+            <img src="../assets/img/hart_mux_outline_white.png">
             <p>Gateways</p>
         </div>
     </b-nav-item>
     <b-nav-item>
-        Something Else
+        <p>Something Else</p>
     </b-nav-item>
 </b-nav>
 </template>
@@ -28,12 +28,12 @@
     min-width: 16rem;
 
     .brand {
-        padding: 2rem;
+        padding: 1.5rem;
         width: 100%;
         text-align: center;
 
         img {
-            max-height: 3rem;
+            max-height: 4rem;
             min-width: 8rem;
         }
     }
@@ -54,7 +54,7 @@
             height: 16rem;
             padding: 1rem;
             justify-content: center;
-            color: #000;
+            color: #fff;
 
             div {
                 text-align: center;
