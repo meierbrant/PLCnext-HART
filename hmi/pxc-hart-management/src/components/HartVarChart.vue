@@ -1,7 +1,12 @@
 <template>
   <b-card :class="size">
-    <div class="">
-        <span class="text-dark title">{{ title }}</span> <b class="value text-primary">{{ currentValue }}<span class="units text-dark">{{ units }}</span></b>
+    <div class="header">
+      <div class="title-value">
+        <span class="text-dark title">{{ title }}</span><b class="value text-primary">{{ currentValue }}<span class="units text-dark">{{ units }}</span></b>
+      </div>
+      <div class="time-indicator">
+        1 Day
+      </div>
     </div>
     <line-chart :chart-data="chartData" :options="options" class="chart"></line-chart>
   </b-card>
@@ -25,6 +30,7 @@ export default class LineGraph extends Vue {
     @Prop() logData!: hart_log_var[]
     @Prop() title!: string
     @Prop({default: "large"}) size!: "large" | "small"
+    @Prop({default: 60*24}) maxPoints!: number // default is 1 day's worth of points. But there might be fewer
     public yStepSize?: number
     public options: ChartOptions = {
       legend: {
@@ -81,6 +87,7 @@ export default class LineGraph extends Vue {
       let dataset: ChartDataSets = {
         label: this.title,
         data: [],
+        pointRadius: 0,
         pointBackgroundColor: "#0099a1",
         backgroundColor: "rgba(0,0,0,0)",
         borderColor: "#0099a1"
@@ -88,9 +95,9 @@ export default class LineGraph extends Vue {
 
       let start = 0
       let count = this.logData.length
-      if (count > 30) {
+      if (count > this.maxPoints) {
         start = count - 31
-        count = 30
+        count = this.maxPoints
       }
       for (let i=start; i<start+count; i++) {
         let v = this.logData[i]
@@ -114,19 +121,35 @@ export default class LineGraph extends Vue {
 }
 </script>
 
-<style>
-  .title {
-    font-size: 1.5em;
-    margin-right: 0.5em;
-  }
+<style lang="scss">
+  .header {
+    .title-value {
+      margin-top: -0.5em;
+      display: inline-block;
 
-  .value {
-    font-size: 2em;
-    margin-bottom: 0.5em;
-  }
+      .title {
+        font-size: 1.5em;
+        margin-right: 0.5em;
+      }
 
-  .units {
-    font-size: 0.7em;
+      .value {
+        font-size: 2em;
+        margin-bottom: 0.5em;
+      }
+
+      .units {
+        font-size: 0.7em;
+      }
+    }
+
+    .time-indicator {
+      color: #aaa;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+      float: right;
+      padding: 0.2em 0.4em;
+      margin-bottom: 0.75rem;
+    }
   }
 
   .large .chart {
