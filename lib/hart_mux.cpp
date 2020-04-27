@@ -351,6 +351,7 @@ json HartMux::getLogData(string dir, int ioCard, int channel) {
     string path = dir+'/'+to_string(ioCard)+'/'+to_string(channel)+'/';
     string logFile1path = path+"vars.log.1";
     string logFile2path = path+"vars.log.2";
+    string activeLogFilePath = path + "vars.log";
     
     json data = {
         {"pv", json::array()},
@@ -359,8 +360,14 @@ json HartMux::getLogData(string dir, int ioCard, int channel) {
         {"qv", json::array()}
     };
 
-    data = parseVarLogfile(logFile1path, data);
-    data = parseVarLogfile(logFile2path, data, data["pv"].size());
+    // determine load order
+    if (string(realpath(activeLogFilePath.c_str(),NULL)).compare(realpath(string(logFile1path).c_str(),NULL)) == 0) {
+        data = parseVarLogfile(logFile2path, data);
+        data = parseVarLogfile(logFile1path, data, data["pv"].size());
+    } else {
+        data = parseVarLogfile(logFile1path, data);
+        data = parseVarLogfile(logFile2path, data, data["pv"].size());
+    }
     
     return data;
 }
