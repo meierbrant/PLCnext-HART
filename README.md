@@ -124,5 +124,3 @@ update-rc.d hartip-server defaults
     It is known that occasionally, after the discovery network broadcast is sent out, the response appears to be sourced from the broadcase address (i.e. 192.168.254.255) instead of from the gateway that sent the response. When this happens the first time in the server, it seems that no matter how many times the server attempts this process, the result is the same. This may mean that there is some outside condition that must be true when the server starts.
 
 * The `hart_mux_server` does not yet handle autodiscovery cases when there are multiple gateways on the network.
-
-* When reading all subdevices, the last one has a null address. This causes the server to hang if it sends a command to that device. The last subdevice's address is not always null, so it may be a specific device on the HART Cart that is causing the problem.

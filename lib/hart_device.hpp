@@ -42,7 +42,7 @@ public:
     // should be practically infinite
     string name = "unknown";
     string company = "unknown";
-    uint8_t extendedDeviceStatusBits;
+    uint8_t extendedDeviceStatusBits = 0;
     
     HartDevice();
     HartDevice(uint16_t deviceTypeCode);

@@ -152,7 +152,8 @@ HartDevice HartMux::readSubDeviceSummary(uint16_t index) {
     size_t count;
     uint8_t status;
     sendSubDeviceCmd(0, d, nullptr, 0, buf, count, status);
-    d.extendedDeviceStatusBits = buf[16];
+    if (count > 16) // extended device status not returned for older HART versions
+        d.extendedDeviceStatusBits = buf[16];
 
     return d;
 }
