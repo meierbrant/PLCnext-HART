@@ -24,10 +24,10 @@
         <HartVarChart :log-data="logData.qv" title="QV" size="small"></HartVarChart>
     </b-card-group>
 
-    <section id="send-cmd">
-        <div class="input-group mb-3">
+    <section id="send-cmd" class="mt-3">
+        <div class="input-group">
             <!-- <input type="text" class="form-control" placeholder="command #" aria-label="cmdnum" aria-describedby="basic-addon2"> -->
-            <b-dropdown id="dropdown-1" :text="'Send a Command'" class="m-md-2" variant="primary">
+            <b-dropdown id="dropdown-1" :text="'Send a Command'" class="m-md-2" variant="primary" size="lg">
                 <b-dropdown-item v-for="cmd in supportedCommands" v-bind:key="cmd.number" v-on:click="sendCmd(cmd);">
                     {{ cmd.number + ": " + cmd.description }}</b-dropdown-item>
             </b-dropdown>
@@ -35,9 +35,9 @@
                 <button class="btn btn-outline-secondary" type="button" v-on:click="sendCmd()">Send</button>
             </div> -->
         </div>
-        <div id="cmd-result" v-if="cmdResponse != null">
-            <h3>Response</h3>
-            <b-card no-body>
+        <div id="cmd-result mt-3">
+            <h3 v-if="activeCommand != null">Command {{ activeCommand.number }} ({{ activeCommand.description }})</h3>
+            <b-card no-body v-if="cmdResponse != null">
                 <b-tabs card>
                 <b-tab title="Table" active>
                     <b-table striped hover :items="cmdResponse.data"></b-table>
@@ -50,6 +50,9 @@
                 </b-tab>
                 </b-tabs>
             </b-card>
+            <b-spinner v-if="activeCommand != null && cmdResponse == null"
+                variant="primary"
+            ></b-spinner>
         </div>
     </section>
 </div>
@@ -74,6 +77,7 @@ import { ChartData } from 'chart.js'
 export default class HartDeviceComponent extends Vue {
     @Prop() device!: HartDeviceDto
     public supportedCommands: hart_command_brief[] = []
+    public activeCommand: hart_command_brief | null = null
     public cmdResponse: hart_command_response | null = null
     public hartAttrs = verboseHartDeviceAttrs
     public logData: hart_device_vars_log = {
@@ -100,6 +104,8 @@ export default class HartDeviceComponent extends Vue {
     }
 
     sendCmd(cmd: hart_command_brief) {
+        this.activeCommand = cmd;
+        this.cmdResponse = null;
         this.$http.get(hartServerUrl + '/gw/' + this.$route.params.serialNo + '/subdevice/' + this.device.ioCard + '/' + this.device.channel + '/cmd/' + cmd.number).then(res => {
             const data = res.data as hart_command_response
             this.cmdResponse = data
