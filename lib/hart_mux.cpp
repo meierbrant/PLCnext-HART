@@ -6,6 +6,7 @@
 #include "nlohmann/json.hpp"
 #include <string.h>
 #include <fstream>
+#include <sstream>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>

@@ -1,4 +1,5 @@
 #include "data_types.hpp"
+#include <sstream>
 
 string hartStatusCodetoString(uint8_t msgId, uint8_t code) {
     if (msgId == 0) {
