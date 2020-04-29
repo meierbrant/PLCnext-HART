@@ -54,6 +54,7 @@ From the linux dev machine, cross-compile the C++ backend for ARM and copy the c
 ```
 scp arm_hartip_server admin@192.168.1.10:/opt/plcnext/hartip
 scp -r hart-csv admin@192.168.1.10:/opt/plcnext/hartip
+scp -r cmd-definitions admin@192.168.1.10:/opt/plcnext/hartip
 ```
 
 Build the web UI assets and copy them to the PLCnext:
@@ -62,10 +63,10 @@ cd hmi/pxc-hart-management
 npm run build
 scp -r dist admin@192.168.1.10:/opt/plcnext/hartip
 ```
-You should now have both the `arm_hartip_server` binary, the `hart-csv` directory, and the `dist` directory with the web UI assets in `/opt/plcnext/hartip`.
+You should now have the `arm_hartip_server` binary, the `hart-csv` and `cmd-definitions` directories, and the `dist` directory with the web UI assets in `/opt/plcnext/hartip`.
 
 ### Adding the Hart Management Web UI to the Nginx server
-SSH into the PLCnext and edit the nginx conf file, `/etc/nginx/nginx.conf`.
+This will make the HART Management System mount at `http://192.168.1.10/hartip`. SSH into the PLCnext and edit the nginx conf file, `/etc/nginx/nginx.conf`.
 
 Find the port 80 server section and mount the hartip `dist` folder at `/hartip`. Make sure to comment out the SSL redirect line. This is necessary because the hartip-server only supports HTTP, not HTTPS.
 ```bash
@@ -124,4 +125,4 @@ update-rc.d hartip-server defaults
 
     It is known that occasionally, after the discovery network broadcast is sent out, the response appears to be sourced from the broadcase address (i.e. 192.168.254.255) instead of from the gateway that sent the response. When this happens the first time in the server, it seems that no matter how many times the server attempts this process, the result is the same. This may mean that there is some outside condition that must be true when the server starts.
 
-* The `hart_mux_server` does not yet handle autodiscovery cases when there are multiple gateways on the network.
+* The `hart_mux_server` does not yet handle autodiscovery cases when there are multiple gateways on the network (but there is an [in-progress branch](https://github.com/meierbrant/PLCnext-HART/tree/feature/multiple-gw-discovery) for it).
