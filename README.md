@@ -76,8 +76,16 @@ Find the port 80 server section and mount the hartip `dist` folder at `/hartip`.
         location /hartip {
             alias /opt/plcnext/hartip/dist;
             index index.html;
+            ssi on;
+            # Without this line, most URI's from the app will result in 404 errors
+            # since this is a Single Page Application and the "pages" don't technically exist.
+            try_files $uri $uri/ /index.html
 
             add_header X-Frame-Options SAMEORIGIN;
+        }
+        error_page 500 502 503 504 /500x.html;
+        location /50x.html {
+            root /var/www/localhost/html;
         }
         #return 301 https://$host$request_uri;
     }
