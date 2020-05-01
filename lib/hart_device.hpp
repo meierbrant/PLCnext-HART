@@ -25,8 +25,11 @@ hart_var_set deserializeHartVarSet(uint8_t *bytes, size_t bCnt);
 void displayVars(hart_var_set vars);
 json extendedDeviceStatusBitsToJson(uint8_t bits);
 
+class HartMux; // forward declare
+
 class HartDevice {
 public:
+    HartMux *hart_mux = nullptr;
     uint8_t addrUniq[5];
     uint16_t typeCode;
     uint8_t ioCard;
@@ -47,6 +50,8 @@ public:
     HartDevice();
     HartDevice(uint16_t deviceTypeCode);
     void setTypeInfo(uint16_t code);
+    hart_var_set readVars();
+    void sendCmd(unsigned char cmd, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt, uint8_t &status);
     json to_json();
     void print();
 

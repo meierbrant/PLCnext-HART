@@ -40,16 +40,45 @@ json find_gw_by_sn(string bcast_addr, string serialNo) {
     return NULL;
 }
 
-json with_gw_data_or_error(Request req, Response &res, json (*gwDataHandler)(Request, Response, json)) {
+json with_hart_mux_or_error(Request req, Response &res, json (*gwDataHandler)(Request, Response, HartMux &)) {
     string serialNo(req.matches[1]);
     json gwData = find_gw_by_sn(BCAST_ADDR, serialNo);
     if (gwData != NULL) {
-        return gwDataHandler(req, res, gwData);
+        HartMux hart_mux(gwData["ip"]);
+        hart_mux.initSession();
+        hart_mux.autodiscoverSubDevices();
+        json data = gwDataHandler(req, res, hart_mux);
+        hart_mux.closeSession();
+        return data;
     } else {
         return json::object({
             {"error", {
                 {"status", res.status = 404},
                 {"message", "gateway with SN " + serialNo + " was not found"}
+            }}
+        });
+    }
+}
+
+json with_subdevice_or_error(Request req, Response &res, HartMux &hart_mux, json (*subdeviceHandler)(Request, Response, HartDevice &)) {
+    int ioCard = stoi(req.matches[2]);
+    int channel = stoi(req.matches[3]);
+    HartDevice dev;
+    bool found = false;
+    for (int i=0; i<hart_mux.ioCapabilities.numConnectedDevices; i++) {
+        dev = hart_mux.devices[i];
+        if (dev.ioCard == (uint8_t)ioCard && dev.channel == (uint8_t)channel) {
+            found = true;
+            break;
+        }
+    }
+    if (found) {
+        return subdeviceHandler(req, res, dev);
+    } else {
+        return json::object({
+            {"error", {
+                {"status", res.status = 404},
+                {"message", "device at ioCard " + to_string(ioCard) + " / channel " + to_string(channel) + " was not found"}
             }}
         });
     }
@@ -130,7 +159,7 @@ int main(int argc, char *argv[]) {
     });
 
     s.Get("/gw/discover", [](const Request& req, Response& res) {
-        // cout << "GET /gw/discover" << endl;
+        cout << "GET /gw/discover" << endl;
         json gwData = discoverGWs(BCAST_ADDR);
         res.set_header("Access-Control-Allow-Origin", "*");
         res.set_content(gwData.dump(), "text/json");
@@ -138,13 +167,8 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/info
     s.Get(R"(/gw/(\d+)/info)", [](const Request& req, Response& res) {        
-        // cout << "GET /gw/{serialNo}/info" << endl;
-        json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
-            HartMux hart_mux(gwData["ip"]);
-            hart_mux.initSession();
-            hart_mux.autodiscoverSubDevices();
-            hart_mux.closeSession();
-
+        cout << "GET /gw/{serialNo}/info" << endl;
+        json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
             return hart_mux.to_json();
         });
 
@@ -154,22 +178,11 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/info/{ioCard}/{channel}
     s.Get(R"(/gw/(\d+)/info/(\d+)/(\d+))", [](const Request& req, Response& res) {      
-        // cout << "GET /gw/{serialNo}/info/{ioCard}/{channel}" << endl;
-        json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
-            string ioCard(req.matches[2]);
-            string channel(req.matches[3]);
-
-            HartMux hart_mux(gwData["ip"]);
-            hart_mux.initSession();
-            hart_mux.autodiscoverSubDevices();
-            HartDevice dev;
-            for (int i=0; i<hart_mux.ioCapabilities.numConnectedDevices; i++) {
-                dev = hart_mux.devices[i];
-                if (dev.ioCard == (uint8_t)stoi(ioCard) && dev.channel == (uint8_t)stoi(channel)) break;
-            }
-            hart_mux.closeSession();
-
-            return dev.to_json();
+        cout << "GET /gw/{serialNo}/info/{ioCard}/{channel}" << endl;
+        json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
+            return with_subdevice_or_error(req, res, hart_mux, [](Request req, Response res, HartDevice &hart_dev) {
+                return hart_dev.to_json();
+            });
         });
 
         res.set_header("Access-Control-Allow-Origin", "*");
@@ -178,12 +191,8 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/vars
     s.Get(R"(/gw/(\d+)/vars)", [](const Request& req, Response& res) {
-        // cout << "GET /gw/{serialNo}/vars" << endl;
-        json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
-            HartMux hart_mux(gwData["ip"]);
-            hart_mux.initSession();
-            hart_mux.autodiscoverSubDevices();
-
+        cout << "GET /gw/{serialNo}/vars" << endl;
+        json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
             json data = json::object();
             data["devices"] = json::array();
             for (int i=0; i<hart_mux.ioCapabilities.numConnectedDevices; i++) {
@@ -193,8 +202,6 @@ int main(int argc, char *argv[]) {
                 data["devices"][i] = dev.to_json();
                 data["devices"][i]["vars"] = vars;
             }
-
-            hart_mux.closeSession();
             return data;
         });
 
@@ -204,13 +211,9 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/vars/{ioCard}
     s.Get(R"(/gw/(\d+)/vars/(\d+))", [](const Request& req, Response& res) {
-        // cout << "GET /gw/{serialNo}/vars/{ioCard}" << endl;
-        json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
+        cout << "GET /gw/{serialNo}/vars/{ioCard}" << endl;
+        json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
             string ioCard(req.matches[2]);
-
-            HartMux hart_mux(gwData["ip"]);
-            hart_mux.initSession();
-            hart_mux.autodiscoverSubDevices();
 
             json data = json::object();
             data["devices"] = json::array();
@@ -225,7 +228,6 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-            hart_mux.closeSession();
             return data;
         });
         
@@ -235,23 +237,12 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/vars/{ioCard}/{channel}
     s.Get(R"(/gw/(\d+)/vars/(\d+)/(\d+))", [](const Request& req, Response& res) {
-        // cout << "GET /gw/{serialNo}/vars/{ioCard}/{channel}" << endl;
-        json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
-            string ioCard(req.matches[2]);
-            string channel(req.matches[3]);
-
-            HartMux hart_mux(gwData["ip"]);
-            hart_mux.initSession();
-            hart_mux.autodiscoverSubDevices();
-            HartDevice dev;
-            for (int i=0; i<hart_mux.ioCapabilities.numConnectedDevices; i++) {
-                dev = hart_mux.devices[i];
-                if (dev.ioCard == (uint8_t)stoi(ioCard) && dev.channel == (uint8_t)stoi(channel)) break;
-            }
-
-            hart_var_set var_set = hart_mux.readSubDeviceVars(dev);
-            hart_mux.closeSession();
-            return to_json(var_set);
+        cout << "GET /gw/{serialNo}/vars/{ioCard}/{channel}" << endl;
+        json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
+            return with_subdevice_or_error(req, res, hart_mux, [](Request req, Response res, HartDevice &hart_dev) {
+                hart_var_set var_set = hart_dev.readVars();
+                return to_json(var_set);
+            });
         });
 
         res.set_header("Access-Control-Allow-Origin", "*");
@@ -260,17 +251,13 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/log/{ioCard}/{channel}
     s.Get(R"(/gw/(\d+)/log/(\d+)/(\d+))", [](const Request& req, Response& res) {
-        // cout << "GET /gw/{serialNo}/log/{ioCard}/{channel}" << endl;
-        json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
+        cout << "GET /gw/{serialNo}/log/{ioCard}/{channel}" << endl;
+        json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
             string serialNo(req.matches[1]);
             string ioCard(req.matches[2]);
             string channel(req.matches[3]);
 
-            HartMux hart_mux(gwData["ip"]);
-            hart_mux.initSession();
-            hart_mux.autodiscoverSubDevices();
             json logData = hart_mux.getLogData("data/"+serialNo, stoi(ioCard), stoi(channel));
-            hart_mux.closeSession();
             return logData;
         });
 
@@ -280,38 +267,28 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/cmd/{cmd}
     s.Get(R"(/gw/(\d+)/subdevice/(\d+)/(\d+)/cmd/(\d+))", [](const Request& req, Response& res) {
-        // cout << "GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/cmd/{cmd}" << endl;
-        json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
-            string ioCard(req.matches[2]);
-            string channel(req.matches[3]);
-            int cmd = stoi(req.matches[4]);
+        cout << "GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/cmd/{cmd}" << endl;
+        json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
+            return with_subdevice_or_error(req, res, hart_mux, [](Request req, Response res, HartDevice &hart_dev) {
+                int cmd = stoi(req.matches[4]);
 
-            HartMux hart_mux(gwData["ip"]);
-            hart_mux.initSession();
-            hart_mux.autodiscoverSubDevices();
-            HartDevice dev;
-            for (int i=0; i<hart_mux.ioCapabilities.numConnectedDevices; i++) {
-                dev = hart_mux.devices[i];
-                if (dev.ioCard == (uint8_t)stoi(ioCard) && dev.channel == (uint8_t)stoi(channel)) break;
-            }
+                uint8_t buf[512];
+                size_t cnt;
+                uint8_t status;
+                hart_dev.sendCmd(cmd, nullptr, 0, buf, cnt, status);
 
-            uint8_t buf[512];
-            size_t cnt;
-            uint8_t status;
-            hart_mux.sendSubDeviceCmd(cmd, dev, nullptr, 0, buf, cnt, status);
-            hart_mux.closeSession();
+                json result;
+                try {
+                    result = cmdRsponseToJson(cmd, buf, cnt, status);
+                } catch (CmdDefNotFound e) {
+                    result = {
+                        {"status", res.status = 400},
+                        {"message", "Command not found. No JSON definition file?"}
+                    };
+                }
 
-            json result;
-            try {
-                result = cmdRsponseToJson(cmd, buf, cnt, status);
-            } catch (CmdDefNotFound e) {
-                result = {
-                    {"status", res.status = 400},
-                    {"message", "Command not found. No JSON definition file?"}
-                };
-            }
-
-            return result;
+                return result;
+            });
         });
         
         res.set_header("Access-Control-Allow-Origin", "*");
@@ -320,13 +297,12 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/commands
     s.Get(R"(/gw/(\d+)/subdevice/(\d+)/(\d+)/commands)", [](const Request& req, Response& res) {
-        // cout << "GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/commands" << endl;
-        json data = with_gw_data_or_error(req, res, [](Request req, Response res, json gwData) {
-            string ioCard(req.matches[2]);
-            string channel(req.matches[3]);
-
-            loadSupportedHartCommands();
-            return JSON_SUPPORTED_HART_CMDS;
+        cout << "GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/commands" << endl;
+        json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
+            return with_subdevice_or_error(req, res, hart_mux, [](Request req, Response res, HartDevice &hart_dev) {
+                loadSupportedHartCommands();
+                return JSON_SUPPORTED_HART_CMDS;
+            });
         });
         
         res.set_header("Access-Control-Allow-Origin", "*");

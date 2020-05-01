@@ -1,5 +1,6 @@
 #include <iostream>
 #include "hart_device.hpp"
+#include "hart_mux.hpp"
 #include "data_types.hpp"
 #include "nlohmann/json.hpp"
 #include "csv-parser/parser.hpp"
@@ -54,6 +55,14 @@ void HartDevice::setTypeInfo(uint16_t deviceTypeCode) {
         name = description;
         company = company_name;
     }
+}
+
+hart_var_set HartDevice::readVars() {
+    return hart_mux->readSubDeviceVars(*this);
+}
+
+void HartDevice::sendCmd(unsigned char cmd, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt, uint8_t &status) {
+    hart_mux->sendSubDeviceCmd(cmd, *this, reqData, reqDataCnt, resData, resDataCnt, status);
 }
 
 void HartDevice::print() {

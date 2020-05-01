@@ -136,6 +136,7 @@ HartDevice HartMux::readSubDeviceSummary(uint16_t index) {
     // temporarily send cmd 84 again to regain that info.
     sendCmd(84, addrUniq, data, 2);
 
+    d.hart_mux = this;
     memcpy(d.addrUniq, &response.body[pduHdrSize+6], 5);
     d.ioCard = response.body[pduHdrSize+2];
     d.channel = response.body[pduHdrSize+3];
