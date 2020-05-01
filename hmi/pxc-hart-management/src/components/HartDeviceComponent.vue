@@ -89,14 +89,8 @@ export default class HartDeviceComponent extends Vue {
     private logPollInterval: number = 0
 
     mounted() {
-        // load supported HART commands
-        this.$http.get(hartServerUrl + '/gw/' + this.$route.params.serialNo + '/subdevice/' + this.device.ioCard + '/' + this.device.channel + '/commands').then(res => {
-            const data = res.data as hart_command_brief[]
-            this.supportedCommands = data
-        })
-
-        this.refreshChartsData()
-        this.logPollInterval = setInterval(this.refreshChartsData, updateInterval)
+        this.update()
+        this.logPollInterval = setInterval(this.update, updateInterval)
     }
 
     get vars(): HartVars | undefined {
@@ -110,6 +104,17 @@ export default class HartDeviceComponent extends Vue {
             const data = res.data as hart_command_response
             this.cmdResponse = data
         })
+    }
+
+    private update() {
+        this.refreshChartsData();
+        if (this.supportedCommands.length == 0) {
+            // load supported HART commands
+            this.$http.get(hartServerUrl + '/gw/' + this.$route.params.serialNo + '/subdevice/' + this.device.ioCard + '/' + this.device.channel + '/commands').then(res => {
+                const data = res.data as hart_command_brief[]
+                this.supportedCommands = data
+            })
+        }
     }
 
     private refreshChartsData() {

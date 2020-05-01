@@ -55,9 +55,9 @@ json with_gw_data_or_error(Request req, Response &res, json (*gwDataHandler)(Req
     }
 }
 
-int main(int argc, char *argv[]) {
-    // load supported HART commands
+void loadSupportedHartCommands() {
     cout << "loading supported HART commands" << endl;
+    JSON_SUPPORTED_HART_CMDS = json::array();
     for (int cmd=0; cmd<50; cmd++) {
         json cmdDef;
         string configFile = UNIVERSAL_CMD_DEF_DIR + "/" + std::to_string(cmd) + ".json";
@@ -70,6 +70,11 @@ int main(int argc, char *argv[]) {
             {"description", cmdDef["description"]}
         };
     }
+}
+
+int main(int argc, char *argv[]) {
+    // load supported HART commands
+    loadSupportedHartCommands();
 
     // periodically log the HART Gateway's subdevice variables
     cout << "starting logger" << endl;
@@ -184,13 +189,6 @@ int main(int argc, char *argv[]) {
             for (int i=0; i<hart_mux.ioCapabilities.numConnectedDevices; i++) {
                 HartDevice dev = hart_mux.devices[i];
                 cout << i+1 << "/" << hart_mux.ioCapabilities.numConnectedDevices << ": name=" << dev.name << "\taddr="; printBytes(dev.addrUniq, 5);
-                long addr = 0;
-                for (int i=0; i<sizeof(dev.addrUniq); i++) {
-                    addr += dev.addrUniq[i];
-                }
-                if (addr == 0) { // ISSUE: this workaround prevents hanging when the device address is null
-                    continue;
-                }
                 json vars = to_json(hart_mux.readSubDeviceVars(dev));
                 data["devices"][i] = dev.to_json();
                 data["devices"][i]["vars"] = vars;
@@ -220,13 +218,6 @@ int main(int argc, char *argv[]) {
             for (int i=0; i<hart_mux.ioCapabilities.numConnectedDevices; i++) {
                 HartDevice dev = hart_mux.devices[i];
                 // cout << i+1 << "/" << hart_mux.ioCapabilities.numConnectedDevices << ": name=" << dev.name << "\taddr="; printBytes(dev.addrUniq, 5);
-                long addr = 0;
-                for (int i=0; i<sizeof(dev.addrUniq); i++) {
-                    addr += dev.addrUniq[i];
-                }
-                if (addr == 0) { // ISSUE: this workaround prevents hanging when the device address is null
-                    continue;
-                }
                 if (dev.ioCard == (uint8_t)stoi(ioCard)) {
                     json vars = to_json(hart_mux.readSubDeviceVars(dev));
                     data["devices"][count] = dev.to_json();
@@ -334,6 +325,7 @@ int main(int argc, char *argv[]) {
             string ioCard(req.matches[2]);
             string channel(req.matches[3]);
 
+            loadSupportedHartCommands();
             return JSON_SUPPORTED_HART_CMDS;
         });
         
