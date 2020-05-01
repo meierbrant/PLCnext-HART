@@ -28,15 +28,6 @@ Install the `g++-arm-linux-gnueabihf` package to allow the host machine to cross
 ```
 sudo apt install g++-arm-linux-gnueabihf
 ```
-To fix an issue with enums that occurs switching to arm, open `lib/csv-parser/parser.hpp` and change
-```c++
-enum class Term : char { CRLF = -2 };
-```
-to
-```c++
-enum class Term { CRLF = -2 };
-```
-This change is currently in [PR](https://github.com/AriaFallah/csv-parser/pull/9), so this fix should be able to be removed soon.
 
 Compile with:
 ```
