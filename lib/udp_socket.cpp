@@ -2,6 +2,7 @@
 
 #include <string.h>     /* for memset() */
 #include <functional>   /* for std::function */
+#include <math.h>
 
 
 UdpSocket::UdpSocket(int port) {
@@ -82,7 +83,7 @@ int UdpSocket::recvfromMultiple(string bcast, char *buf, size_t len, std::functi
                 else { //Recieved Data!!
                     handler(ip, buf, n);
                     tv.tv_sec = 0;
-                    tv.tv_usec = (int)(timeout / (2 ^ responses++));
+                    tv.tv_usec = (int)(timeout / pow(2, responses++));
                 }
                 break;
         }

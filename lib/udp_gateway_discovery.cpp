@@ -2,6 +2,7 @@
 
 #include "data_types.hpp"
 #include "udp_socket.hpp"
+#include "nettools.hpp"
 #include "nlohmann/json.hpp"
 #include <chrono>
 
@@ -44,21 +45,24 @@ string resolveIoCardType(char moduleCode) {
     }
 }
 
-int gwDiscoverAttempt(string bcastAddr, json *gwArray) {
+int gwDiscoverAttempt(json network_info, json *gwArray) {
     json newGws = json::array();
-    string query, serialNo, recvAddr;
+    string query, serialNo, bcastAddr, recvAddr;
     char buf[256];
     UdpSocket s(5000);
-    recvAddr = bcastAddr;
+    bcastAddr = network_info["bcast"];
+    recvAddr = network_info["bcast"];
 
     // FIXME: inconsistently getting correct recvAddr (50%)
     query = "GW PL ETH search.req\0";
     s.sendto(bcastAddr, query.c_str(), query.length());
-    int n = s.recvfromMultiple(bcastAddr, buf, sizeof(buf), [&newGws, bcastAddr](string ip, char *data, size_t len){
-        newGws[newGws.size()] = {
-            {"ip", ip},
-            {"serialNo", string(data)}
-        };
+    int n = s.recvfromMultiple(bcastAddr, buf, sizeof(buf), [&newGws, &network_info](string ip, char *data, size_t len){
+        if (nettools::ip_is_on_subnet(ip, network_info["netmask"], network_info["network"])) {
+            newGws[newGws.size()] = {
+                {"ip", ip},
+                {"serialNo", string(data)}
+            };
+        }
     }, 0, 2000000);
     if (n<0) return n;
 
@@ -97,14 +101,14 @@ int gwDiscoverAttempt(string bcastAddr, json *gwArray) {
     return 0;
 }
 
-json discoverGWs(string bcastAddr) {
+json discoverGWs(json network_info) {
     json gwArray = json::array();
 
     // UDP is unreliable, so send the bcast and listen multiple times
     int numtries = 3;
 
     for (int i=0; i<numtries; i++) {
-        if (gwDiscoverAttempt(bcastAddr, &gwArray) < 0) {
+        if (gwDiscoverAttempt(network_info, &gwArray) < 0) {
             printf("gw discovery attempt failed\n");
             throw FailedGwDiscoveryException();
             // this can happen when there was no GW on the given broadcast

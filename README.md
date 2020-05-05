@@ -126,9 +126,6 @@ npm run build
 ```
 
 ## Issues
-* `lib/udp_dateway_discovery.cpp`:`discoverGWs()`
-
-    IP broadcast address is hardcoded. The broadcast address of the PLCnext's network should be auto discovered.
 
 * `lib/hart_device.cpp`:`setTypeInfo(uint16_t deviceTypeCode)`
     
@@ -146,5 +143,3 @@ npm run build
 * About 30% of the time, when the `hart_mux_server` is started, it is incapable of discovering gateways no matter how many times you ask it.
 
     It is known that occasionally, after the discovery network broadcast is sent out, the response appears to be sourced from the broadcase address (i.e. 192.168.254.255) instead of from the gateway that sent the response. When this happens the first time in the server, it seems that no matter how many times the server attempts this process, the result is the same. This may mean that there is some outside condition that must be true when the server starts.
-
-* The `hart_mux_server` does not yet handle autodiscovery cases when there are multiple gateways on the network (but there is an [in-progress branch](https://github.com/meierbrant/PLCnext-HART/tree/feature/multiple-gw-discovery) for it).

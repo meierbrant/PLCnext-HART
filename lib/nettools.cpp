@@ -137,3 +137,17 @@ int nettools::get_feasible_subnets(netif_summary **netif_p, int *count) {
         cur_net = cur_net->next;
     }
 }
+
+bool nettools::ip_is_on_subnet(string addr, string netmask, string network) {
+    // printf("checking if ip (%s/%s) is on subnet (%s)\n", addr.c_str(), netmask.c_str(), network.c_str());
+    struct in_addr _addr, _netmask, _network;
+    inet_pton(AF_INET, addr.c_str(), &_addr);
+    inet_pton(AF_INET, netmask.c_str(), &_netmask);
+    inet_pton(AF_INET, network.c_str(), &_network);
+    char calculated_network[16];
+    struct in_addr _calculated_network;
+    _calculated_network.s_addr = _addr.s_addr & _netmask.s_addr;
+    inet_ntop(AF_INET, &_calculated_network, calculated_network, sizeof(calculated_network));
+    if (network.compare(calculated_network) == 0) return true;
+    return false;
+}

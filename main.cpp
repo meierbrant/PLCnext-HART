@@ -18,7 +18,8 @@ using nettools::netif_summary;
 
 // NOTE: this must be compiled with the -pthread flag because the httpserver is multithreaded
 
-string BCAST_ADDR = "192.168.1.255";
+string DEFAULT_BCAST_ADDR = "192.168.1.255";
+json selected_network = NULL;
 json networks;
 
 const string UNIVERSAL_CMD_DEF_DIR = "cmd-definitions/universal";
@@ -33,7 +34,7 @@ json find_gw_by_sn(string bcast_addr, string serialNo) {
         }
     }
     
-    gatewaysCache = discoverGWs(bcast_addr);
+    gatewaysCache = discoverGWs(selected_network);
     for (int i=0; i<gatewaysCache.size(); i++) {
         if (gatewaysCache[i]["serialNo"] == serialNo) {
             return gatewaysCache[i];
@@ -44,7 +45,7 @@ json find_gw_by_sn(string bcast_addr, string serialNo) {
 
 json with_hart_mux_or_error(Request req, Response &res, json (*gwDataHandler)(Request, Response, HartMux &)) {
     string serialNo(req.matches[1]);
-    json gwData = find_gw_by_sn(BCAST_ADDR, serialNo);
+    json gwData = find_gw_by_sn(selected_network["bcast"], serialNo);
     if (gwData != NULL) {
         HartMux hart_mux(gwData["ip"]);
         hart_mux.initSession();
@@ -116,19 +117,26 @@ json discoverNetworks() {
             {"network", cur_netif->network},
             {"bcast", cur_netif->bcast}
         };
+        if (selected_network == NULL && nwData[i]["bcast"] == DEFAULT_BCAST_ADDR) selected_network = nwData[i];
+
         cur_netif = cur_netif->next;
     }
+    if (selected_network == NULL) selected_network = nwData[0];
+
     networks = nwData;
     return nwData;
 }
 
 int main(int argc, char *argv[]) {
+    // init network data
+    discoverNetworks();
+
     // load supported HART commands
     loadSupportedHartCommands();
 
     // periodically log the HART Gateway's subdevice variables
     cout << "starting logger" << endl;
-    gatewaysCache = discoverGWs(BCAST_ADDR);
+    gatewaysCache = discoverGWs(selected_network);
     thread loggingThread([&]() {
         while (true) {
             for (int i=0; i<gatewaysCache.size(); i++) {
@@ -207,8 +215,8 @@ int main(int argc, char *argv[]) {
             for (int i=0; i<networks.size(); i++) {
                 string ip = networks[i]["network"];
                 if (ip.compare(postData["network"]) == 0) {
-                    BCAST_ADDR = networks[i]["bcast"];
-                    cout << "new BCAST_ADDR: " << BCAST_ADDR << endl;
+                    selected_network = networks[i];
+                    cout << "new bcast addr: " << selected_network["bcast"] << endl;
                     data["status"] = res.status = 200;
                     data["message"] = "success";
                 }
@@ -225,7 +233,7 @@ int main(int argc, char *argv[]) {
     // GET /gw/discover
     s.Get("/gw/discover", [](const Request& req, Response& res) {
         cout << "GET /gw/discover" << endl;
-        json gwData = discoverGWs(BCAST_ADDR);
+        json gwData = discoverGWs(selected_network);
 
         res.set_header("Access-Control-Allow-Origin", "*");
         res.set_content(gwData.dump(), "text/json");
@@ -389,7 +397,7 @@ int main(int argc, char *argv[]) {
     string domain = "0.0.0.0";
     unsigned int port = 5900;
     cout << "starting HART IP server at "+domain+":"<<port<<endl;
-    cout << "initial BCAST_ADDR: " << BCAST_ADDR << endl;
+    cout << "initial selected_network: " << selected_network.dump() << endl;
     s.listen(domain.c_str(), port);
     // end webserver
 
