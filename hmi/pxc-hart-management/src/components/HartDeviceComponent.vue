@@ -93,6 +93,10 @@ export default class HartDeviceComponent extends Vue {
         this.logPollInterval = setInterval(this.update, updateInterval)
     }
 
+    beforeDestroy () {
+        clearInterval(this.logPollInterval)
+    }
+
     get vars(): HartVars | undefined {
         return this.device.vars
     }
