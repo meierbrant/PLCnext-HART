@@ -362,6 +362,8 @@ json HartMux::getLogData(string dir, int ioCard, int channel) {
         {"qv", json::array()}
     };
 
+    if (realpath(activeLogFilePath.c_str(),NULL) == NULL) return data;
+
     // determine load order
     if (string(realpath(activeLogFilePath.c_str(),NULL)).compare(realpath(string(logFile1path).c_str(),NULL)) == 0) {
         data = parseVarLogfile(logFile2path, data);
