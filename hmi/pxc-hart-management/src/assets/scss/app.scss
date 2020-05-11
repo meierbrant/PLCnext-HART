@@ -73,7 +73,11 @@ body, #app {
 tr.clickable {
     &:hover {
         cursor: pointer;
-        background-color: map_get($theme-colors, 'secondary') !important;
+        background-color: darken(#fff, 10) !important;
+    }
+
+    td {
+        color: map-get($map: $theme-colors, $key: "primary");
     }
 }
 

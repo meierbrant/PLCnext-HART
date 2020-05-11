@@ -94,7 +94,6 @@ export default class HartMuxLiveList extends Vue {
         if (localStorage.liveList && localStorage.liveList.gw && localStorage.liveList.gw.serialNo) {
             const llc = JSON.parse(localStorage.liveList) as LiveListCache
             if (llc.gw.serialNo === this.gwSN) {
-                console.log(llc)
                 this.gw = llc.gw
                 llc.devices.forEach(dev => {
                     if (dev.vars) Object.keys(dev.vars).forEach(key => {

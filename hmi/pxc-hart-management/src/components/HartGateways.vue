@@ -1,19 +1,33 @@
 <template>
 <div>
-    <p>Which network is your HART Gateway on?</p>
-    <b-dropdown id="network-select" :text="selectedNetwork">
+    Detected Hart Gateways:
+    <table class="table table-striped text-left">
+        <tr>
+            <th>Long Tag</th>
+            <th>Name</th>
+            <th>Company</th>
+            <th>IP Address</th>
+        </tr>
+        <router-link :to="'/gateways/' + gw.serialNo" tag="tr"
+                v-for="gw in gateways" v-bind:key="gw.serialNo" class="clickable">
+            <td>
+                {{ gw.longTag }}
+            </td>
+            <td>
+                {{ gw.name }}
+            </td>
+            <td>
+                {{ gw.company }}
+            </td>
+            <td>
+                {{ gw.ip }}
+            </td>
+        </router-link>
+    </table>
+
+    <b-dropdown id="network-select" :text="selectedNetwork" variant="primary">
         <b-dropdown-item v-for="netinfo in networks" :key="netinfo.network" v-on:click="selectNetwork(netinfo)">{{ netinfo.network }}</b-dropdown-item>
     </b-dropdown>
-    <br><br>
-
-    Detected Hart Gateways:
-    <table class="table table-striped">
-        <tr v-for="gw in gateways" v-bind:key="gw.serialNo">
-            <td>
-                <router-link :to="'/gateways/' + gw.serialNo">{{ gw.ip }}</router-link>
-            </td>
-        </tr>
-    </table>
 </div>
 </template>
 
@@ -32,7 +46,7 @@ interface NetworkInfo {
 @Component({})
 export default class HartGateways extends Vue {
     public networks: NetworkInfo[] = []
-    public selectedNetwork: string = "Choose Network"
+    public selectedNetwork: string = "Choose Another Network"
     public gateways: HartGw[] = []
     private polling: number = 0
 

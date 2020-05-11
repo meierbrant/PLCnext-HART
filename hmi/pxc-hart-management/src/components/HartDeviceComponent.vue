@@ -89,7 +89,7 @@ export default class HartDeviceComponent extends Vue {
     private logPollInterval: number = 0
 
     mounted() {
-        this.update()
+        setTimeout(this.update, 500) // wait for things to load
         this.logPollInterval = setInterval(this.update, updateInterval)
     }
 
