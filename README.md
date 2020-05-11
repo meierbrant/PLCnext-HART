@@ -1,65 +1,31 @@
 # PLCnext HART Integration
 
-The goal of this C++ library is to allow the PLCnext to connect with HART devices through the Phoenix Contact HART MUX.
-
-## Test from Linux Dev Machine
-<!-- Make sure `libssl-dev` and `libssl-dev:1386` are installed. -->
-Compile with:
-```
-g++ -pthread -o hart_mux_server main.cpp lib/*.cpp
-```
-
-To start the HTTP server for the HART Gateway API at `localhost:5900`:
-```
-./hart_mux_server
-```
-
-To start the UI webserver at `localhost:8080`:
-```
-cd hmi/pxc-hart-management
-npm run serve
-```
+The goal of this C++ library is to allow the PLCnext to connect with HART devices through the Phoenix Contact `GW PL ETH/UNI-BUS` or `GW PL ETH/BASIC-BUS`.
 
 ## Deploy on PLCnext
+_Note: For Windows, you can use [WinSCP](https://winscp.net/eng/index.php) instead of scp to graphically transfer files and you can use [PuTTY](https://www.putty.org/) for ssh._
 
-### Cross-Compile from Linux Dev Machine
+### Transfering the Files
 
-Install the `g++-arm-linux-gnueabihf` package to allow the host machine to cross-compile for arm:
-```
-sudo apt install g++-arm-linux-gnueabihf
-```
-
-Compile with:
-```
-arm-linux-gnueabihf-g++ -std=c++11 -Wno-psabi -pthread -o arm_hartip_server main.cpp lib/*.cpp
-```
-
-## Installing on PLCnext
-SSH into the PLCnext and set up the environment:
+SSH into the PLCnext as the `admin` user and create the hartip folder:
 ```bash
-ssh admin@192.168.1.10
 mkdir -p /opt/plcnext/hartip
 ```
 
-From the linux dev machine, cross-compile the C++ backend for ARM and copy the cross-compiled binary to the PLCnext:
+Copy the cross-compiled binary, `arm_hartip_server`, and the `hart-csv`, `cmd-definitions`, and `dist` directories to the PLCnext (into the `/opt/plcnext/hartip` directory). Linux example:
 ```
 scp arm_hartip_server admin@192.168.1.10:/opt/plcnext/hartip
 scp -r hart-csv admin@192.168.1.10:/opt/plcnext/hartip
 scp -r cmd-definitions admin@192.168.1.10:/opt/plcnext/hartip
-```
-
-Build the web UI assets and copy them to the PLCnext:
-```
-cd hmi/pxc-hart-management
-npm run build
 scp -r dist admin@192.168.1.10:/opt/plcnext/hartip
 ```
-You should now have the `arm_hartip_server` binary, the `hart-csv` and `cmd-definitions` directories, and the `dist` directory with the web UI assets in `/opt/plcnext/hartip`.
 
-### Adding the Hart Management Web UI to the Nginx server
-This will make the HART Management System mount at `http://192.168.1.10/hartip`. SSH into the PLCnext and edit the nginx conf file, `/etc/nginx/nginx.conf`.
+### Adding the HART Monitoring Web UI to the Nginx server
+This will make the HART Management System mount at `http://192.168.1.10/hartip`.
 
-Find the port 80 server section and mount the hartip `dist` folder at `/hartip`. Make sure to comment out the SSL redirect line. This is necessary because the hartip-server only supports HTTP, not HTTPS.
+SSH into the PLCnext and edit the nginx conf file, `/etc/nginx/nginx.conf`. You may need to SSH as the `admin` user, then run `su root` to gain root privileges first. _Note: If you are not able to log in with `su root`, you may need to set the root password first with the command `sudo passwd root` (enter your admin password first, then you will be prompted to enter the new password for root). Then edit the config file by running `nano /etc/nginx/nginx.conf`._
+
+Add a new port 80 server section and mount the hartip `dist` folder at the `/hartip` URI. Make sure to comment out the SSL redirect line. This is necessary because the hartip-server only supports HTTP, not HTTPS. The new section should look like this:
 ```bash
     server {
         listen  80;
@@ -87,16 +53,57 @@ Don't forget to restart nginx as root:
 ```
 
 ### Making the HART IP server run on startup
-Copy `hartip_server_loop.sh` from the host machine to `/opt/plcnext/hartip` on the PLCnext:
+Copy `hartip_server_loop.sh` from the host machine to `/opt/plcnext/hartip` on the PLCnext. Linux example:
 ```bash
 scp hartip_server_loop.sh admin@192.168.1.10:/opt/plcnext/hartip
 ```
 
-As root, copy the `hartip-server` script in this repo to `/etc/init.d/` and change its permissions to `755`. Then add it to the default daemons for startup:
+As root(you may need to SSH in as `admin` first, then login as root using `su root`), copy the `hartip-server` script to `/etc/init.d/`on the PLCnext and change its permissions to `755` with:
+```bash
+chmod 755 /etc/init.d/hartip-server
+```
+Then add it to the default daemons for startup:
 ```bash
 update-rc.d hartip-server defaults
 ```
 
+## Additional Developer Info
+
+### Test from Linux Dev Machine
+<!-- Make sure `libssl-dev` and `libssl-dev:1386` are installed. -->
+Compile with:
+```
+g++ -pthread -o hart_mux_server main.cpp lib/*.cpp
+```
+
+To start the HTTP server for the HART Gateway API at `localhost:5900`:
+```
+./hart_mux_server
+```
+
+To start the UI webserver at `localhost:8080`:
+```
+cd hmi/pxc-hart-management
+npm run serve
+```
+
+### Cross-Compile from Linux Dev Machine
+
+Install the `g++-arm-linux-gnueabihf` package to allow the host machine to cross-compile for arm:
+```
+sudo apt install g++-arm-linux-gnueabihf
+```
+
+Compile with:
+```
+arm-linux-gnueabihf-g++ -std=c++11 -Wno-psabi -pthread -o arm_hartip_server main.cpp lib/*.cpp
+```
+
+### Build the assets for production
+```bash
+cd hmi/pxc-hart-management
+npm run build
+```
 
 ## Issues
 * `lib/udp_dateway_discovery.cpp`:`discoverGWs()`
