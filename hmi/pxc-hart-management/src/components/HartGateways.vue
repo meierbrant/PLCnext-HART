@@ -4,20 +4,12 @@
     <table class="table table-striped text-left">
         <tr>
             <th>Long Tag</th>
-            <th>Name</th>
-            <th>Company</th>
             <th>IP Address</th>
         </tr>
         <router-link :to="'/gateways/' + gw.serialNo" tag="tr"
                 v-for="gw in gateways" v-bind:key="gw.serialNo" class="clickable">
             <td>
                 {{ gw.longTag }}
-            </td>
-            <td>
-                {{ gw.name }}
-            </td>
-            <td>
-                {{ gw.company }}
             </td>
             <td>
                 {{ gw.ip }}

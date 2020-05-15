@@ -88,7 +88,7 @@ json with_subdevice_or_error(Request req, Response &res, HartMux &hart_mux, json
 }
 
 void loadSupportedHartCommands() {
-    cout << "loading supported HART commands" << endl;
+    // cout << "loading supported HART commands" << endl;
     JSON_SUPPORTED_HART_CMDS = json::array();
     for (int cmd=0; cmd<50; cmd++) {
         json cmdDef;
@@ -105,7 +105,7 @@ void loadSupportedHartCommands() {
 }
 
 json discoverNetworks() {
-    netif_summary *cur_netif;
+    struct netif_summary *cur_netif;
     int count;
     nettools::get_feasible_subnets(&cur_netif, &count);
     json nwData = json::array();
@@ -232,7 +232,7 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/discover
     s.Get("/gw/discover", [](const Request& req, Response& res) {
-        cout << "GET /gw/discover" << endl;
+        // cout << "GET /gw/discover" << endl;
         json gwData = discoverGWs(selected_network);
 
         res.set_header("Access-Control-Allow-Origin", "*");
@@ -241,7 +241,7 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/info
     s.Get(R"(/gw/(\d+)/info)", [](const Request& req, Response& res) {        
-        cout << "GET /gw/{serialNo}/info" << endl;
+        // cout << "GET /gw/{serialNo}/info" << endl;
         json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
             return hart_mux.to_json();
         });
@@ -252,7 +252,7 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/info/{ioCard}/{channel}
     s.Get(R"(/gw/(\d+)/info/(\d+)/(\d+))", [](const Request& req, Response& res) {      
-        cout << "GET /gw/{serialNo}/info/{ioCard}/{channel}" << endl;
+        // cout << "GET /gw/{serialNo}/info/{ioCard}/{channel}" << endl;
         json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
             return with_subdevice_or_error(req, res, hart_mux, [](Request req, Response res, HartDevice &hart_dev) {
                 return hart_dev.to_json();
@@ -265,7 +265,7 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/vars
     s.Get(R"(/gw/(\d+)/vars)", [](const Request& req, Response& res) {
-        cout << "GET /gw/{serialNo}/vars" << endl;
+        // cout << "GET /gw/{serialNo}/vars" << endl;
         json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
             json data = json::object();
             data["devices"] = json::array();
@@ -285,7 +285,7 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/vars/{ioCard}
     s.Get(R"(/gw/(\d+)/vars/(\d+))", [](const Request& req, Response& res) {
-        cout << "GET /gw/{serialNo}/vars/{ioCard}" << endl;
+        // cout << "GET /gw/{serialNo}/vars/{ioCard}" << endl;
         json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
             string ioCard(req.matches[2]);
 
@@ -311,7 +311,7 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/vars/{ioCard}/{channel}
     s.Get(R"(/gw/(\d+)/vars/(\d+)/(\d+))", [](const Request& req, Response& res) {
-        cout << "GET /gw/{serialNo}/vars/{ioCard}/{channel}" << endl;
+        // cout << "GET /gw/{serialNo}/vars/{ioCard}/{channel}" << endl;
         json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
             return with_subdevice_or_error(req, res, hart_mux, [](Request req, Response res, HartDevice &hart_dev) {
                 hart_var_set var_set = hart_dev.readVars();
@@ -325,7 +325,7 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/log/{ioCard}/{channel}
     s.Get(R"(/gw/(\d+)/log/(\d+)/(\d+))", [](const Request& req, Response& res) {
-        cout << "GET /gw/{serialNo}/log/{ioCard}/{channel}" << endl;
+        // cout << "GET /gw/{serialNo}/log/{ioCard}/{channel}" << endl;
         json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
             string serialNo(req.matches[1]);
             string ioCard(req.matches[2]);
@@ -341,7 +341,7 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/cmd/{cmd}
     s.Get(R"(/gw/(\d+)/subdevice/(\d+)/(\d+)/cmd/(\d+))", [](const Request& req, Response& res) {
-        cout << "GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/cmd/{cmd}" << endl;
+        // cout << "GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/cmd/{cmd}" << endl;
         json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
             return with_subdevice_or_error(req, res, hart_mux, [](Request req, Response res, HartDevice &hart_dev) {
                 int cmd = stoi(req.matches[4]);
@@ -371,7 +371,7 @@ int main(int argc, char *argv[]) {
 
     // GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/commands
     s.Get(R"(/gw/(\d+)/subdevice/(\d+)/(\d+)/commands)", [](const Request& req, Response& res) {
-        cout << "GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/commands" << endl;
+        // cout << "GET /gw/{serialNo}/subdevice/{ioCard}/{channel}/commands" << endl;
         json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
             return with_subdevice_or_error(req, res, hart_mux, [](Request req, Response res, HartDevice &hart_dev) {
                 loadSupportedHartCommands();

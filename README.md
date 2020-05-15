@@ -77,9 +77,14 @@ Copy `hartip_server_loop.sh` from the host machine to `/opt/plcnext/hartip` on t
 ```bash
 scp hartip_server_loop.sh admin@192.168.1.10:/opt/plcnext/hartip
 ```
+and then as the admin user on the PLCnext:
+```bash
+chmod +x /opt/plcnext/hartip/hartip_server_loop.sh
+```
 
 As root(you may need to SSH in as `admin` first, then login as root using `su root`), copy the `hartip-server` script to `/etc/init.d/`on the PLCnext and change its permissions to `755` with:
 ```bash
+cp hartip-server /etc/init.d
 chmod 755 /etc/init.d/hartip-server
 ```
 Then add it to the default daemons for startup:

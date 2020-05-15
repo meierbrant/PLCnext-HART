@@ -42,12 +42,6 @@
                 <b-tab title="Table" active>
                     <b-table striped hover :items="cmdResponse.data"></b-table>
                 </b-tab>
-                <b-tab title="JSON">
-                    <vue-json-pretty
-                        :path="'res'"
-                        :data="cmdResponse">
-                    </vue-json-pretty>
-                </b-tab>
                 </b-tabs>
             </b-card>
             <b-spinner v-if="activeCommand != null && cmdResponse == null"

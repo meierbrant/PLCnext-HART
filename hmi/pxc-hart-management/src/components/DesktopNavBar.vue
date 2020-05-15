@@ -9,9 +9,6 @@
             <p>Gateways</p>
         </div>
     </b-nav-item>
-    <b-nav-item>
-        <p>Something Else</p>
-    </b-nav-item>
 </b-nav>
 </template>
 

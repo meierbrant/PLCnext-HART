@@ -1,7 +1,7 @@
 <template>
 <main role="main" class="text-center">
-  <h1 class="cover-heading">Phoenix Contact HART Management System</h1>
-  <p class="lead">Easily view and manage your HART device network.</p>
+  <h1 class="cover-heading">HART Monitoring System</h1>
+  <p class="lead">Easily view your HART device network.</p>
   <p class="lead">
     <HartGateways />
   </p>
