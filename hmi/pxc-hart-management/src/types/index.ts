@@ -8,7 +8,10 @@ export interface HartMuxDto extends HartDeviceDto {
 export interface HartGw {
     ip: string
     modules: string[]
-    serialNo: number
+    serialNo: number,
+    name: string,
+    company: string,
+    longTag: string
 }
 
 export const hartServerUrl = "http://"+location.host.split(':')[0]+":5900"

@@ -5,6 +5,7 @@
 #include <cstring>
 #include "hart_device.hpp"
 #include "nlohmann/json.hpp"
+#include <exception>
 
 // uncomment if endianness of PLCnext does not match network byte order
 #define REVERSE
@@ -17,6 +18,14 @@ using std::setfill;
 using std::setw;
 using std::string;
 using nlohmann::json;
+
+struct MismatchedCheckbytesException : public std::exception
+{
+	const char * what () const throw ()
+    {
+    	return "Mismatched check bytes in HART PDU frame";
+    }
+};
 
 struct uint24_t {
     unsigned int data: 24;
@@ -83,8 +92,8 @@ string bytesToHexStr(uint8_t *bytes, int len);
 void serialize(hart_ip_hdr_t header, uint8_t *bytes);
 hart_ip_hdr_t deserializeHartIpHdr(uint8_t *bytes);
 
-size_t serialize(hart_pdu_frame f, uint8_t *bytes);
-hart_pdu_frame deserializeHartPduFrame(uint8_t *bytes);
+size_t serialize(hart_pdu_frame f, uint8_t *bytes, bool skip_checkbyte=false);
+hart_pdu_frame deserializeHartPduFrame(uint8_t *bytes, bool is_nested_frame=false);
 
 template <typename T>
 T fromBytes(uint8_t* bytes) {

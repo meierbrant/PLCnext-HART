@@ -5,6 +5,7 @@
 #include "nettools.hpp"
 #include "nlohmann/json.hpp"
 #include <chrono>
+#include "hart_mux.hpp"
 
 using namespace std;
 using nlohmann::json;
@@ -67,6 +68,7 @@ int gwDiscoverAttempt(json network_info, json *gwArray) {
     if (n<0) return n;
 
     for (int i=0; i<newGws.size(); i++) {
+        // determine GW IO cards
         string ip = newGws[i]["ip"];
         serialNo = newGws[i]["serialNo"];
         query = "GW PL ETH ident.req: " + serialNo + '\0';
@@ -80,6 +82,15 @@ int gwDiscoverAttempt(json network_info, json *gwArray) {
             if (!module.empty()) ioArray[i] = module;
         }
         newGws[i]["modules"] = ioArray;
+
+        // determine GW long tag
+        HartMux hart_mux(ip);
+        hart_mux.initSession();
+        hart_mux.getLongTag();
+        hart_mux.closeSession();
+        newGws[i]["name"] = hart_mux.name;
+        newGws[i]["company"] = hart_mux.company;
+        newGws[i]["longTag"] = hart_mux.longTag;
     }
 
     // merge newGws with gwArray

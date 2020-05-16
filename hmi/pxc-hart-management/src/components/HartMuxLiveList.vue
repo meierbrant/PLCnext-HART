@@ -81,7 +81,7 @@ type hartVarKey = 'loopCurrent' | 'pv' | 'sv' | 'tv' | 'qv'
 @Component
 export default class HartMuxLiveList extends Vue {
     @Prop() gwSN!: number
-    public gw: HartGw = {ip: "", modules: [], serialNo: 0}
+    public gw: HartGw = {ip: "", modules: [], serialNo: 0, company: "", name: "", longTag: ""}
     public devices: HartDeviceDto[] = []
     private polling: number = 0
     private nextIoCardUpdate: number = 0

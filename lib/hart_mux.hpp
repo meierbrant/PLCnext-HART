@@ -39,10 +39,12 @@ class HartMux : public HartDevice {
     hart_var_set getSubDeviceVars(HartDevice dev);
     void logVars(string dir);
     json getLogData(string dir, int ioCard, int channel);
+    string getLongTag();
+    void setLongTag(string longTag);
 
     int sendCmd(unsigned char cmd, uint8_t pollAddr);
     int sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData=NULL, size_t reqDataCnt=0);
-    void sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt);
+    int sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt);
     void sendSubDeviceCmd(unsigned char cmd, HartDevice dev, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt, uint8_t &status);
     json to_json();
 
@@ -59,6 +61,8 @@ private:
     int sendData(uint8_t *data, size_t len);
     int recvData(uint8_t *buf);
     int sendPduFrame(hart_pdu_frame frame);
+    int pduTransaction(hart_pdu_frame send_frame, hart_pdu_frame &recv_frame);
+    int nestedPduTransaction(hart_pdu_frame send_frame, hart_pdu_frame &recv_frame);
     hart_pdu_frame recvPduFrame();
 
     /* Inputs */

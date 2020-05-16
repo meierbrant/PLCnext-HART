@@ -67,7 +67,7 @@ string bytesToHexStr(uint8_t *bytes, int len) {
     return ss.str();
 }
 
-size_t serialize(hart_pdu_frame f, uint8_t *bytes) {
+size_t serialize(hart_pdu_frame f, uint8_t *bytes, bool skip_checkbyte) {
     memcpy(bytes, &f.delimiter, 1);
     // deal with varying address as indicated by delimiter
     int nextAddr = 1;
@@ -92,15 +92,17 @@ size_t serialize(hart_pdu_frame f, uint8_t *bytes) {
         f.chk ^= bytes[i];
     }
     bytes[nextAddr] = f.chk;
+    if (skip_checkbyte) nextAddr--;
 
     return nextAddr + 1;
 }
 
-hart_pdu_frame deserializeHartPduFrame(uint8_t *bytes) {
+hart_pdu_frame deserializeHartPduFrame(uint8_t *bytes, bool is_nested_frame) {
+    cout << "deserialzieHartPduFrame()" << endl;
     hart_pdu_frame f;
     hart_pdu_delimiter d;
-    f.delimiter = d;
     memcpy(&d, bytes, 1);
+    f.delimiter = d;
     // deal with varying address as indicated by delimiter
     int nextAddr = 1;
     if (d.addressType == hart_pdu_delimiter::UNIQUE) {
@@ -123,13 +125,22 @@ hart_pdu_frame deserializeHartPduFrame(uint8_t *bytes) {
         f.chk ^= bytes[i];
     }
 
-    #ifdef DEBUG
-    cout << "d.frameType=" << (uint32_t)d.frameType << endl;
+    // #ifdef DEBUG
+    cout << "f.delimiter:" << endl;
+    cout << "\taddressType = " << (unsigned int)f.delimiter.addressType << endl;
+    cout << "\tnumExpansionBytes = " << (unsigned int)f.delimiter.numExpansionBytes << endl;
+    cout << "\tframeType = " << (unsigned int)f.delimiter.frameType << endl;
     cout << "f.addr="; printBytes(f.addr, 5);
     cout << "f.cmd=" << (uint32_t)f.cmd << endl;
     cout << "f.byteCnt=" << (uint32_t)f.byteCnt << endl;
     cout << "f.data: "; printBytes(f.data, f.byteCnt);
-    #endif
+    printf("f.chk=0x%x\n", (uint32_t)f.chk);
+    // #endif
+
+    // nested frames (from cmd 77) don't have checkbytes
+    if (!is_nested_frame && f.chk != bytes[nextAddr]) {
+        throw MismatchedCheckbytesException();
+    }
 
     return f;
 }

@@ -239,6 +239,36 @@ int main(int argc, char *argv[]) {
         res.set_content(gwData.dump(), "text/json");
     });
 
+    // Allow  POST to /gw/{serialNo}
+    s.Options(R"(/gw/(\d+))", [](const Request& req, Response& res) {
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_header("Access-Control-Allow-Headers", "content-type");
+        res.set_header("Access-Control-Allow-Methods", "POST");
+    });
+
+    s.Post(R"(/gw/(\d+))", [&](const Request& req, Response& res) {
+        cout << "POST /gw/{serialNo}" << endl;
+        json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
+            json postData = json::parse(req.body);
+            json result = {
+                {"status", res.status = 400},
+                {"message", "longTag was not a string"}
+            };
+            if (postData["longTag"].is_string()) {
+                string longTag = postData["longTag"];
+                hart_mux.setLongTag(longTag);
+                result = {
+                    {"status", res.status = 300},
+                    {"message", "success"}
+                };
+            }
+            return result;
+        });
+
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_content(data.dump(), "text/json");
+    });
+
     // GET /gw/{serialNo}/info
     s.Get(R"(/gw/(\d+)/info)", [](const Request& req, Response& res) {        
         // cout << "GET /gw/{serialNo}/info" << endl;
@@ -333,6 +363,51 @@ int main(int argc, char *argv[]) {
 
             json logData = hart_mux.getLogData("data/"+serialNo, stoi(ioCard), stoi(channel));
             return logData;
+        });
+
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_content(data.dump(), "text/json");
+    });
+
+    // Allow  POST to /gw/{serialNo}/subdevice/{ioCard}/{channel}
+    s.Options(R"(/gw/(\d+)/subdevice/(\d+)/(\d+))", [](const Request& req, Response& res) {
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_header("Access-Control-Allow-Headers", "content-type");
+        res.set_header("Access-Control-Allow-Methods", "POST");
+    });
+
+    s.Post(R"(/gw/(\d+)/subdevice/(\d+)/(\d+))", [&](const Request& req, Response& res) {
+        cout << "POST /gw/{serialNo}/subdevice/{ioCard}/{channel}" << endl;
+        json data = with_hart_mux_or_error(req, res, [](Request req, Response res, HartMux &hart_mux) {
+            return with_subdevice_or_error(req, res, hart_mux, [](Request req, Response res, HartDevice &hart_dev) {
+                json postData = json::parse(req.body);
+                json result = {
+                    {"status", res.status = 400},
+                    {"message", "bad request"}
+                };
+                if (postData["longTag"].is_string()) {
+                    string longTag = postData["longTag"];
+                    uint8_t data[32];
+                    memset(data, 0, sizeof(data));
+                    memcpy(data, longTag.c_str(), longTag.size());
+                    uint8_t buf[512];
+                    size_t cnt;
+                    uint8_t status;
+                    hart_dev.sendCmd(22, data, 12, buf, cnt, status);
+                    cout << "set Long Tag status: " << (unsigned int)status << endl;
+                    cout << "cnt = " << (unsigned int)cnt << endl;
+                    result = {
+                        {"status", res.status = 300},
+                        {"message", "success"}
+                    };
+                } else {
+                    result = {
+                        {"status", res.status = 400},
+                        {"message", "longTag was not a string"}
+                    };
+                }
+                return result;
+            });
         });
 
         res.set_header("Access-Control-Allow-Origin", "*");

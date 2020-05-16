@@ -46,6 +46,7 @@ public:
     string name = "unknown";
     string company = "unknown";
     uint8_t extendedDeviceStatusBits = 0;
+    uint8_t minPreambleCount = 20;
     
     HartDevice();
     HartDevice(uint16_t deviceTypeCode);

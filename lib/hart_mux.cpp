@@ -155,8 +155,8 @@ HartDevice HartMux::readSubDeviceSummary(uint16_t index) {
     uint8_t status;
     sendSubDeviceCmd(0, d, nullptr, 0, buf, count, status);
     if (count > 16) // extended device status not returned for older HART versions
+        d.minPreambleCount = buf[3];
         d.extendedDeviceStatusBits = buf[16];
-
     return d;
 }
 
@@ -190,20 +190,14 @@ hart_var_set HartMux::readSubDeviceVars(HartDevice dev) {
     size_t bCnt = 0;
     innerData[bCnt++] = dev.ioCard;
     innerData[bCnt++] = dev.channel;
-    innerData[bCnt++] = 5; // transmit preamble countserialize(innerFrame, innerData);
-    bCnt += serialize(innerFrame, &innerData[bCnt]);
+    innerData[bCnt++] = 5; // transmit preamble count
+    bCnt += serialize(innerFrame, &innerData[bCnt], true);
     hart_pdu_frame outerFrame = buildPduFrame(addrUniq, 77, innerData, bCnt);
 
-    sendPduFrame(outerFrame);
-    hart_pdu_frame f = recvPduFrame();
-    while (f.byteCnt == 2) { // got a bad response
-        sendPduFrame(outerFrame);
-        f = recvPduFrame();
-    }
+    struct hart_pdu_frame recv_inner_frame;
+    nestedPduTransaction(outerFrame, recv_inner_frame);
 
-    hart_pdu_frame f2 = deserializeHartPduFrame(&f.data[4]); // 4 is start of inner PDU frame
-
-    hart_var_set vars = deserializeHartVarSet(&f2.data[2], f2.byteCnt-2);
+    hart_var_set vars = deserializeHartVarSet(recv_inner_frame.data, recv_inner_frame.byteCnt);
     return vars;
 }
 
@@ -349,6 +343,22 @@ json parseVarLogfile(string filepath, json data, size_t offset=0) {
     return data;
 }
 
+string HartMux::getLongTag() {
+    sendCmd(20, addrUniq);
+    // cout << "getLongTag(): "; printBytes(response.body, 50);
+    int cnt = response.body[7];
+    response.body[8+cnt] = '\0';
+    longTag = string((char *)&response.body[8]);
+    // cout << "longTag: " << longTag << endl;
+    return longTag;
+}
+
+void HartMux::setLongTag(string longTag) {
+    char data[32];
+    strcpy(data, longTag.c_str());
+    sendCmd(22, addrUniq, (uint8_t *)data, sizeof(data));
+}
+
 json HartMux::getLogData(string dir, int ioCard, int channel) {
     string path = dir+'/'+to_string(ioCard)+'/'+to_string(channel)+'/';
     string logFile1path = path+"vars.log.1";
@@ -421,22 +431,24 @@ int HartMux::sendCmd(unsigned char cmd, uint8_t pollAddr) {
  */
 int HartMux::sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData, size_t reqDataCnt) {
     hart_pdu_frame f = buildPduFrame(uniqueAddr, cmd, reqData, reqDataCnt);
+    hart_pdu_frame response_frame;
 
-    sendPduFrame(f);
+    pduTransaction(f, response_frame);
 
-    uint8_t buf[512];
-    memset(buf, 0, 512);
-    
-    return recvData(buf);
+    return response.header.status;
 }
 
-void HartMux::sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt) {
+int HartMux::sendCmd(unsigned char cmd, uint8_t *uniqueAddr, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt) {
     hart_pdu_frame f = buildPduFrame(uniqueAddr, cmd, reqData, reqDataCnt);
+    hart_pdu_frame response_frame;
 
-    sendPduFrame(f);
+    pduTransaction(f, response_frame);
 
-    memset(resData, 0, 512);
-    resDataCnt = recvData(resData);
+    // memset(resData, 0, 512);
+    memcpy(resData, response_frame.data, response_frame.byteCnt);
+    resDataCnt = response_frame.byteCnt;
+
+    return response.header.status;
 }
 
 void HartMux::sendSubDeviceCmd(unsigned char cmd, HartDevice dev, uint8_t *reqData, size_t reqDataCnt, uint8_t *resData, size_t &resDataCnt, uint8_t &status) {
@@ -447,30 +459,40 @@ void HartMux::sendSubDeviceCmd(unsigned char cmd, HartDevice dev, uint8_t *reqDa
     hart_pdu_frame innerFrame = buildPduFrame(dev.addrUniq, cmd, reqData, reqDataCnt);
     innerFrame.addr[0] = innerFrame.addr[0] & 0x3f | 0x80; // long poll address
     uint8_t innerData[255];
+    memset(innerData, 0, sizeof(innerData));
     size_t bCnt = 0;
     innerData[bCnt++] = dev.ioCard;
     innerData[bCnt++] = dev.channel;
-    innerData[bCnt++] = 5; // transmit preamble countserialize(innerFrame, innerData);
-    bCnt += serialize(innerFrame, &innerData[bCnt]);
+    innerData[bCnt++] = dev.minPreambleCount; // transmit preamble count;
+    bCnt += serialize(innerFrame, &innerData[bCnt], true);
     hart_pdu_frame outerFrame = buildPduFrame(addrUniq, 77, innerData, bCnt);
 
-    sendPduFrame(outerFrame);
-    hart_pdu_frame f = recvPduFrame();
-    while (f.byteCnt == 2) { // got a bad response
-        sendPduFrame(outerFrame);
-        f = recvPduFrame();
-    }
+    uint8_t outerFrameBytes[255];
+    // memset(outerFrameBytes, 0, sizeof(outerFrameBytes));
+    // serialize(outerFrame, outerFrameBytes);
 
-    hart_pdu_frame f2 = deserializeHartPduFrame(&f.data[4]); // 4 is start of inner PDU frame
-    #ifdef DEBUG
-    printf("longTag: %s\n", dev.longTag.c_str());
-    printf("inner PDU frame:\tcmd: %i\tbyteCnt: %i\taddr: ", f2.cmd, f2.byteCnt); printBytes(f2.addr, sizeof(f2.addr));
-    printf("\t data: \n"); printBytes(&f2.data[2], f2.byteCnt-2);
-    #endif
-    
+    if (cmd == 22) {
+        cout << "cmd 22: WRITE LONG TAG" << endl;
+        // printBytes(innerFrame);
+    } else if (cmd == 14) {
+        cout << "cmd 14: TRANSDUCER INFO" << endl;
+    }
+    // cout << "innerFrame" << endl; printBytes(innerFrame);
+    // cout << "outerFrame" << endl; printBytes(outerFrameBytes, 255);
+
+    struct hart_pdu_frame recv_inner_frame;
+    nestedPduTransaction(outerFrame, recv_inner_frame);
+
     status = response.header.status;
-    resDataCnt = f2.byteCnt-2;
-    memcpy(resData, &f2.data[2], resDataCnt);
+    resDataCnt = recv_inner_frame.byteCnt;
+    memcpy(resData, recv_inner_frame.data, resDataCnt);
+
+    // #ifdef DEBUG
+    printf("longTag: %s\n", dev.longTag.c_str());
+    printf("status: %i\n", status);
+    printf("inner PDU frame:\tcmd: %i\tbyteCnt: %i\taddr: ", (int)recv_inner_frame.cmd, (int)resDataCnt); printBytes(recv_inner_frame.addr, sizeof(recv_inner_frame.addr));
+    printf("\t inner_frame.data: \n"); printBytes(recv_inner_frame.data, recv_inner_frame.byteCnt);
+    // #endif
 }
 
 int HartMux::send(uint8_t *bytes, size_t len, int flags) {
@@ -566,6 +588,8 @@ int HartMux::recvData(uint8_t *buf) {
 int HartMux::sendPduFrame(hart_pdu_frame frame) {
     uint8_t data[512];
     size_t byteCount = serialize(frame, data);
+    cout << "sending PDU frame:" << endl;
+    printBytes(data, byteCount);
 
     request.header.version = 1;
     request.header.msgType = 0; // 0: Request
@@ -575,10 +599,60 @@ int HartMux::sendPduFrame(hart_pdu_frame frame) {
 }
 
 hart_pdu_frame HartMux::recvPduFrame() {
+    cout << "recvPduFrame()" << endl;
     uint8_t buf[512];
+    memset(buf, 0, sizeof(buf));
     recvData(buf);
-    hart_pdu_frame f = deserializeHartPduFrame(buf);
+    hart_pdu_frame f;
+    try {
+        f = deserializeHartPduFrame(buf);
+    } catch (MismatchedCheckbytesException& e) {
+        throw e;
+    }
     return f;
+}
+
+int HartMux::pduTransaction(hart_pdu_frame send_frame, hart_pdu_frame &recv_frame) {
+    bool success = false;
+    hart_pdu_frame f;
+    while (!success) {
+        sendPduFrame(send_frame);
+        try {
+            f = recvPduFrame();
+            bool frame_is_field_ack = f.delimiter.addressType == f.delimiter.UNIQUE && f.delimiter.frameType == f.delimiter.ACK;
+            success = f.byteCnt != 2; // byteCnt of 2 also means it was a bad response
+        } catch (MismatchedCheckbytesException& e) {
+            cout << e.what() << ". retrying..." << endl;
+            continue;
+        }
+        if (!success) usleep(200);
+    }
+
+    uint8_t outerFrameBytes[256];
+    memset(outerFrameBytes, 0, sizeof(outerFrameBytes));
+    serialize(f, outerFrameBytes);
+    cout << "recieved outerFrame bytes:" << endl;
+    printBytes(outerFrameBytes, f.byteCnt+1+5+3);
+
+    recv_frame = f;
+}
+
+int HartMux::nestedPduTransaction(hart_pdu_frame send_frame, hart_pdu_frame &recv_inner_frame) {
+    bool success = false;
+    hart_pdu_frame f;
+    while (!success) {
+        pduTransaction(send_frame, f);
+        try {
+            // nested frames (from cmd 77) are preceded by ioCard and channel; ignore these
+            // not sure why this needs to be 4 instead of 2
+            recv_inner_frame = deserializeHartPduFrame(&f.data[2], true); // 2 is start of inner PDU frame
+            success = true; //recv_inner_frame.byteCnt != 2; // byteCnt of 2 also means it was a bad response
+        } catch (MismatchedCheckbytesException& e) {
+            cout << e.what() << ". retrying..." << endl;
+            continue;
+        }
+        if (!success) usleep(200);
+    }
 }
 
 void autodiscoverLoop(HartMux *mux, int seconds) {
